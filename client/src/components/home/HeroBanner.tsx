@@ -10,8 +10,8 @@ const slides = [
     title: 'Big Billion Days',
     subtitle: 'Deals that blow your mind every single day',
     cta: 'Shop Now',
-    bg: 'from-blue-700 via-blue-600 to-cyan-500',
-    accent: 'bg-yellow-400 text-gray-900',
+    bg: 'from-gray-900 via-gray-800 to-rose-600',
+    accent: 'bg-accent text-white',
     pattern: 'circles',
   },
   {
@@ -121,7 +121,7 @@ export default function HeroBanner() {
             <p className="text-white/80 text-sm sm:text-base mt-2 max-w-xs">
               {slide.subtitle}
             </p>
-            <button className="btn-primary mt-5 bg-white !text-gray-900 hover:!bg-yellow-300 shadow-lg">
+            <button className="btn-primary mt-5 bg-white !text-gray-900 hover:!bg-accent-light shadow-lg">
               {slide.cta} →
             </button>
           </div>

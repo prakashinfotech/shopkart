@@ -2,10 +2,16 @@
   "name": "flipkart-clone",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "scripts": {
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
-    "dev:server": "cd server && npm run dev"
+    "dev:server": "cd server && npm run dev",
+    "build:client": "cd client && npm run build",
+    "seed": "cd server && npm run seed"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

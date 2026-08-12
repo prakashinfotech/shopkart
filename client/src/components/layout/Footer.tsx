@@ -70,14 +70,14 @@ const payIcons = ['Visa', 'Mastercard', 'UPI', 'NetBanking', 'COD', 'EMI'];
 
 export default function Footer() {
   return (
-    <footer className="bg-[#172337] text-gray-300 mt-6">
+    <footer className="bg-[#211d1a] text-gray-300 mt-6">
       {/* Trust bar */}
       <div className="border-b border-white/10">
         <div className="max-w-[1200px] mx-auto px-4 py-4
                         grid grid-cols-2 sm:grid-cols-4 gap-4">
           {trust.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center gap-2.5">
-              <Icon size={18} className="text-yellow-400 flex-shrink-0" />
+              <Icon size={18} className="text-accent flex-shrink-0" />
               <span className="text-xs font-medium">{label}</span>
             </div>
           ))}
@@ -116,7 +116,7 @@ export default function Footer() {
           {/* Brand + copyright */}
           <div className="flex items-center gap-3">
             <span className="text-white font-bold text-lg">
-              Shop<span className="text-yellow-400">Kart</span>
+              Shop<span className="text-accent">Kart</span>
             </span>
             <span className="text-gray-500 text-xs hidden sm:inline">|</span>
             <span className="text-gray-400 text-xs">

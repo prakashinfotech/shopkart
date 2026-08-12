@@ -50,7 +50,7 @@ export default function SearchDropdown({ onSelect, activeIdx }: Props) {
               role="option"
               aria-selected={idx === activeIdx}
               className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors
-                          ${idx === activeIdx ? 'bg-blue-50' : 'hover:bg-surface'}`}
+                          ${idx === activeIdx ? 'bg-accent-light' : 'hover:bg-surface'}`}
               onMouseDown={(e) => { e.preventDefault(); onSelect(product.name); }}
             >
               {/* Thumbnail — explicit width/height so Next.js renders the image reliably */}
@@ -87,7 +87,7 @@ export default function SearchDropdown({ onSelect, activeIdx }: Props) {
             aria-selected={activeIdx === suggestions.length}
             className={`flex items-center gap-2 px-4 py-3 cursor-pointer text-sm
                         text-primary font-medium border-t border-gray-100 transition-colors
-                        ${activeIdx === suggestions.length ? 'bg-blue-50' : 'hover:bg-surface'}`}
+                        ${activeIdx === suggestions.length ? 'bg-accent-light' : 'hover:bg-surface'}`}
             onMouseDown={(e) => { e.preventDefault(); onSelect(query); }}
           >
             <Search size={13} className="flex-shrink-0" />
@@ -119,7 +119,7 @@ export default function SearchDropdown({ onSelect, activeIdx }: Props) {
                 role="option"
                 aria-selected={idx === activeIdx}
                 className={`flex items-center gap-3 px-4 py-2.5 group cursor-pointer transition-colors
-                            ${idx === activeIdx ? 'bg-blue-50' : 'hover:bg-surface'}`}
+                            ${idx === activeIdx ? 'bg-accent-light' : 'hover:bg-surface'}`}
               >
                 <Clock size={13} className="text-gray-400 flex-shrink-0" />
                 <button

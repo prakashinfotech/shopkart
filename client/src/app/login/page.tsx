@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const DEMO_ACCOUNTS = [
   { label: 'Admin',   email: 'admin@flipkart.com', password: 'Admin@1234', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { label: 'User 1',  email: 'user1@flipkart.com', password: 'User@1234',  color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { label: 'User 1',  email: 'user1@flipkart.com', password: 'User@1234',  color: 'bg-rose-100 text-rose-700 border-rose-200' },
   { label: 'User 2',  email: 'user2@flipkart.com', password: 'User@1234',  color: 'bg-green-100 text-green-700 border-green-200' },
 ];
 
@@ -60,10 +60,10 @@ export default function LoginPage() {
             {/* Logo */}
             <div className="mb-8">
               <span className="text-3xl font-extrabold tracking-tight">
-                Shop<span className="text-yellow-300">Kart</span>
+                Shop<span className="text-accent">Kart</span>
               </span>
-              <span className="block text-blue-200 text-xs italic mt-0.5">
-                Explore <span className="text-yellow-300">Plus</span> ✦
+              <span className="block text-gray-400 text-xs italic mt-0.5">
+                Explore <span className="text-accent">Plus</span> ✦
               </span>
             </div>
 
@@ -72,7 +72,7 @@ export default function LoginPage() {
               <br />
               your account
             </h2>
-            <p className="text-blue-200 text-sm mt-2">
+            <p className="text-gray-400 text-sm mt-2">
               India's favourite online marketplace
             </p>
 

@@ -24,7 +24,7 @@ export default function AddProductPage() {
       fd.append('mrp',         form.mrp);
       fd.append('stock',       form.stock || '0');
       fd.append('isFeatured',  String(form.isFeatured));
-      // Append each selected file under the field name 'images'
+      fd.append('variants',    JSON.stringify(form.variants));
       form.files.forEach(file => fd.append('images', file));
 
       const token = localStorage.getItem('token');

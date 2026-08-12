@@ -74,7 +74,7 @@ export async function getProductById(req, res) {
 // POST /api/admin/products  (multipart/form-data)
 export async function createProduct(req, res) {
   try {
-    const { name, description, price, mrp, category, brand, stock, isFeatured } = req.body;
+    const { name, description, price, mrp, category, brand, stock, isFeatured, variants: variantsStr } = req.body;
 
     if (!name?.trim() || !price || !mrp || !category) {
       return res.status(400).json({ message: 'Name, price, MRP, and category are required' });
@@ -93,6 +93,7 @@ export async function createProduct(req, res) {
       brand:       brand?.trim() || '',
       stock:       Number(stock) || 0,
       isFeatured:  parseBool(isFeatured),
+      variants:    parseVariants(variantsStr),
     });
 
     await product.populate('category', 'name slug');
@@ -108,7 +109,7 @@ export async function updateProduct(req, res) {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const { name, description, price, mrp, category, brand, stock, isFeatured, existingImages } = req.body;
+    const { name, description, price, mrp, category, brand, stock, isFeatured, existingImages, variants: variantsStr } = req.body;
 
     if (name        !== undefined) product.name        = name.trim();
     if (description !== undefined) product.description = description.trim();
@@ -118,6 +119,7 @@ export async function updateProduct(req, res) {
     if (brand       !== undefined) product.brand       = brand.trim();
     if (stock       !== undefined) product.stock       = Number(stock);
     if (isFeatured  !== undefined) product.isFeatured  = parseBool(isFeatured);
+    if (variantsStr !== undefined) product.variants    = parseVariants(variantsStr);
 
     // Image update logic:
     // 1. New files uploaded → replace entirely
@@ -151,6 +153,19 @@ export async function deleteProduct(req, res) {
   }
 }
 
+// PATCH /api/admin/products/:id/listing  — toggle isListed on/off
+export async function toggleListing(req, res) {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    product.isListed = !product.isListed;
+    await product.save();
+    res.json({ _id: product._id, isListed: product.isListed });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 // Build image array: uploaded files take priority over URL strings
@@ -168,4 +183,22 @@ function parseBool(v) {
   if (v === true  || v === 'true')  return true;
   if (v === false || v === 'false') return false;
   return Boolean(v);
+}
+
+// Parse variants JSON string from FormData
+function parseVariants(str) {
+  if (!str) return [];
+  try {
+    const arr = JSON.parse(str);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(v => v.type?.trim() && v.value?.trim())
+      .map(v => {
+        const item = { type: v.type.trim(), value: v.value.trim() };
+        if (v.price !== '' && v.price != null) item.price = Number(v.price);
+        if (v.mrp   !== '' && v.mrp   != null) item.mrp   = Number(v.mrp);
+        if (v.stock !== '' && v.stock != null) item.stock = Number(v.stock);
+        return item;
+      });
+  } catch { return []; }
 }

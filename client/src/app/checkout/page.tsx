@@ -391,7 +391,7 @@ export default function CheckoutPage() {
                       className={`w-full flex items-center gap-3 p-4 border rounded-xl text-left
                                   transition-all duration-200
                                   ${form.paymentType === 'cod'
-                                    ? 'border-primary bg-blue-50 shadow-sm'
+                                    ? 'border-primary bg-primary/10 shadow-sm'
                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                     >
                       <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center
@@ -427,7 +427,7 @@ export default function CheckoutPage() {
                         type="button"
                         onClick={() => setPaymentType('online')}
                         className={`w-full flex items-center gap-3 p-4 text-left transition-colors
-                                    ${isOnline ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                                    ${isOnline ? 'bg-primary/10' : 'hover:bg-gray-50'}`}
                       >
                         <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center
                                          ${isOnline ? 'border-primary' : 'border-gray-400'}`}>
@@ -462,7 +462,7 @@ export default function CheckoutPage() {
                       <div className={`transition-all duration-300 ease-in-out
                                       ${isOnline ? 'max-h-[700px] opacity-100' : 'max-h-0 opacity-0'}
                                       overflow-hidden`}>
-                        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-blue-100 bg-blue-50/40">
+                        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-primary/10 bg-primary/5">
 
                           {/* Method-selection error */}
                           {errors.onlineMethod && (

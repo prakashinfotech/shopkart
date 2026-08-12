@@ -45,7 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/" className="flex flex-col leading-none">
           <span className="text-white font-bold text-lg tracking-tight">
-            Shop<span className="text-yellow-300">Kart</span>
+            Shop<span className="text-accent">Kart</span>
           </span>
           <span className="text-purple-300 text-[10px] font-semibold tracking-widest uppercase mt-0.5">
             Admin Panel

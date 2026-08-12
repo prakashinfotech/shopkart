@@ -49,10 +49,10 @@ export default function RegisterPage() {
           <div>
             <div className="mb-8">
               <span className="text-3xl font-extrabold tracking-tight">
-                Shop<span className="text-yellow-300">Kart</span>
+                Shop<span className="text-accent">Kart</span>
               </span>
-              <span className="block text-blue-200 text-xs italic mt-0.5">
-                Explore <span className="text-yellow-300">Plus</span> ✦
+              <span className="block text-gray-400 text-xs italic mt-0.5">
+                Explore <span className="text-accent">Plus</span> ✦
               </span>
             </div>
 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
               <br />
               new here!
             </h2>
-            <p className="text-blue-200 text-sm mt-2">
+            <p className="text-gray-400 text-sm mt-2">
               Sign up with your email to get started
             </p>
 
@@ -209,7 +209,7 @@ export default function RegisterPage() {
           <Link
             href="/login"
             className="block w-full text-center border border-primary text-primary text-sm
-                       font-semibold py-2.5 rounded hover:bg-blue-50 transition-colors"
+                       font-semibold py-2.5 rounded hover:bg-surface transition-colors"
           >
             Login Instead
           </Link>

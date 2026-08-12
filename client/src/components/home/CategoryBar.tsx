@@ -14,7 +14,6 @@ const categories = [
   { label: 'Two Wheelers', emoji: '🏍️', href: '/category/two-wheelers' },
   { label: 'Appliances',   emoji: '🔌', href: '/category/appliances' },
   { label: 'Books',        emoji: '📚', href: '/category/books' },
-  { label: 'Flights',      emoji: '✈️', href: '/category/flights' },
 ];
 
 export default function CategoryBar() {

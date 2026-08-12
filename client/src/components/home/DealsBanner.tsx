@@ -5,7 +5,7 @@ const banners = [
     title: 'Min. 40% Off',
     sub: 'Laptops & Accessories',
     emoji: '💻',
-    bg: 'from-blue-600 to-blue-400',
+    bg: 'from-gray-800 to-gray-600',
     href: '/category/electronics',
   },
   {
@@ -19,7 +19,7 @@ const banners = [
     title: 'Kitchen Deals',
     sub: 'Up to 65% off appliances',
     emoji: '🍳',
-    bg: 'from-orange-500 to-yellow-400',
+    bg: 'from-rose-500 to-orange-400',
     href: '/category/home',
   },
 ];

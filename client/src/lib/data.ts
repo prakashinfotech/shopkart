@@ -13,6 +13,10 @@ export type Product = {
   freeDelivery: boolean;
 };
 
+// Unsplash CDN — stable, high-quality, free-to-use images
+const U = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=600&q=80&auto=format&fit=crop`;
+
 export const products: Product[] = [
   {
     id: 1,
@@ -22,7 +26,7 @@ export const products: Product[] = [
     mrp: 3990,
     rating: 4.3,
     reviews: 84210,
-    image: 'https://picsum.photos/seed/boat-rockerz-450/300/300',
+    image: U('1618609255-f7a6b8a49df9'),   // wireless over-ear headphones
     badge: '67% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'deals',
@@ -36,7 +40,7 @@ export const products: Product[] = [
     mrp: 55900,
     rating: 4.5,
     reviews: 32100,
-    image: 'https://picsum.photos/seed/samsung-4k-tv-43/300/300',
+    image: U('1593642632559-0c6d3fc62b89'),  // modern flat-screen TV
     badge: '48% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'deals',
@@ -50,7 +54,7 @@ export const products: Product[] = [
     mrp: 12999,
     rating: 4.2,
     reviews: 15320,
-    image: 'https://picsum.photos/seed/realme-narzo-n55/300/300',
+    image: U('1598327105666-5b89351aff97'),   // blue smartphone
     badge: '30% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'deals',
@@ -64,7 +68,7 @@ export const products: Product[] = [
     mrp: 4295,
     rating: 4.1,
     reviews: 9875,
-    image: 'https://picsum.photos/seed/prestige-mixer-grinder/300/300',
+    image: U('1556909114-f6e7ad7d3136'),    // kitchen appliance / blender
     badge: '60% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'deals',
@@ -78,7 +82,7 @@ export const products: Product[] = [
     mrp: 79900,
     rating: 4.7,
     reviews: 122400,
-    image: 'https://picsum.photos/seed/apple-iphone-15-black/300/300',
+    image: U('1510557880182-3d4d3cba35a5'),  // dark iPhone on clean background
     badge: 'Best Seller',
     badgeColor: 'bg-accent/10 text-accent',
     category: 'electronics',
@@ -92,7 +96,7 @@ export const products: Product[] = [
     mrp: 62990,
     rating: 4.4,
     reviews: 8230,
-    image: 'https://picsum.photos/seed/dell-inspiron-15-laptop/300/300',
+    image: U('1496181133206-80ce9b88a853'),  // open laptop on desk
     badge: '24% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'electronics',
@@ -106,7 +110,7 @@ export const products: Product[] = [
     mrp: 34990,
     rating: 4.6,
     reviews: 41560,
-    image: 'https://picsum.photos/seed/sony-wh1000xm5/300/300',
+    image: U('1505740420928-5e560c06d30e'),  // black premium headphones on white bg
     badge: '28% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'electronics',
@@ -120,7 +124,7 @@ export const products: Product[] = [
     mrp: 44995,
     rating: 4.5,
     reviews: 18900,
-    image: 'https://picsum.photos/seed/canon-eos-1500d/300/300',
+    image: U('1516035069371-29a1b244cc32'),  // DSLR camera on clean background
     badge: '31% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'electronics',
@@ -134,7 +138,7 @@ export const products: Product[] = [
     mrp: 1199,
     rating: 4.0,
     reviews: 5430,
-    image: 'https://picsum.photos/seed/roadster-men-shirt/300/300',
+    image: U('1602810318383-e386cc2a3ccf'),  // men's casual shirt
     badge: '60% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'fashion',
@@ -148,7 +152,7 @@ export const products: Product[] = [
     mrp: 2799,
     rating: 4.3,
     reviews: 7210,
-    image: 'https://picsum.photos/seed/biba-women-kurta-set/300/300',
+    image: U('1490481651871-ab68de25d43d'),  // women's ethnic wear / kurta
     badge: '50% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'fashion',
@@ -162,7 +166,7 @@ export const products: Product[] = [
     mrp: 4999,
     rating: 4.2,
     reviews: 22110,
-    image: 'https://picsum.photos/seed/puma-running-shoes-black/300/300',
+    image: U('1542291026-7eec264c27ff'),     // athletic running shoes
     badge: '60% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'fashion',
@@ -176,7 +180,7 @@ export const products: Product[] = [
     mrp: 9500,
     rating: 4.6,
     reviews: 3980,
-    image: 'https://picsum.photos/seed/rayban-wayfarer-rb2132/300/300',
+    image: U('1572635196237-14b3f281503f'),  // stylish sunglasses
     badge: '36% off',
     badgeColor: 'bg-green-100 text-green-700',
     category: 'fashion',

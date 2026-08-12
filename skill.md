@@ -333,11 +333,10 @@ flipkart-clone/
 | **Frontend** | Vercel | Native Next.js support; automatic preview deployments on push |
 | **Backend** | Render / Railway | Node.js server with environment variable configuration |
 | **Database** | MongoDB Atlas | Managed cloud MongoDB; update `MONGO_URI` in `.env` |
-| **Images** | Cloudinary | Add `CLOUDINARY_CLOUD_NAME`, `API_KEY`, `API_SECRET` to `.env` |
+| **Images** | Cloudinary | `config/cloudinary.js` reads `CLOUDINARY_*` env vars, but uploads are not yet wired to it — the upload middleware currently writes to local disk. Wiring Cloudinary into `middleware/upload.js` is required before local-disk storage can be replaced |
 
-**Environment variables required for production:**
+**Server environment variables required for production:**
 ```env
-# Server
 PORT=5000
 MONGO_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/flipkart-clone
 JWT_SECRET=<strong-random-secret>
@@ -346,7 +345,6 @@ CLIENT_URL=https://your-frontend.vercel.app
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
-
-# Client (Next.js)
-NEXT_PUBLIC_API_URL=https://your-backend.render.com
 ```
+
+**Client:** the API proxy target is currently hardcoded in `client/next.config.ts` (`rewrites()` → `http://localhost:5000`), not read from an environment variable. Deploying the client against a non-local backend requires editing that file's `destination` values — there is no `NEXT_PUBLIC_API_URL` (or equivalent) wired into the codebase today.

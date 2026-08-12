@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, UploadCloud, X, ImageOff, Star, AlertCircle } from 'lucide-react';
+import { Loader2, UploadCloud, X, ImageOff, Star, AlertCircle, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+
+export interface VariantFormItem {
+  type:  string;
+  value: string;
+  price: string;  // empty = use base price
+  mrp:   string;  // empty = use base MRP
+  stock: string;  // empty = use base stock
+}
 
 export interface ProductFormData {
   name:           string;
@@ -14,6 +22,7 @@ export interface ProductFormData {
   isFeatured:     boolean;
   files:          File[];       // newly selected files to upload
   existingImages: string[];     // already-stored paths (edit mode)
+  variants:       VariantFormItem[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,10 +39,12 @@ interface Props {
 const EMPTY: ProductFormData = {
   name: '', brand: '', category: '', description: '',
   price: '', mrp: '', stock: '0',
-  isFeatured: false, files: [], existingImages: [],
+  isFeatured: false, files: [], existingImages: [], variants: [],
 };
 
-const MAX_FILE_SIZE  = 15 * 1024 * 1024;   // 15 MB
+const VARIANT_TYPE_PRESETS = ['Color', 'Storage', 'RAM', 'Size'];
+
+const MAX_FILE_SIZE  = 15 * 1024 * 1024;
 const MAX_FILE_COUNT = 5;
 const ALLOWED_TYPES  = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_EXT    = /\.(jpe?g|png|webp|gif)$/i;
@@ -44,6 +55,10 @@ const inp = (hasErr: boolean) =>
    placeholder:text-gray-400
    ${hasErr ? 'border-red-400 bg-red-50' : 'border-gray-300'}`;
 
+const smInp = `px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg outline-none
+               focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all
+               placeholder:text-gray-400 w-full`;
+
 function FieldError({ msg }: { msg?: string }) {
   return msg
     ? <p className="flex items-center gap-1 text-xs text-red-500 mt-1"><AlertCircle size={11} />{msg}</p>
@@ -51,21 +66,25 @@ function FieldError({ msg }: { msg?: string }) {
 }
 
 export default function ProductForm({ initial, onSubmit, submitLabel, loading, error }: Props) {
-  const [form,       setForm]       = useState<ProductFormData>({ ...EMPTY, ...initial });
-  const [errors,     setErrors]     = useState<Partial<Record<keyof ProductFormData, string>>>({});
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [catLoading, setCatLoading] = useState(true);
-  const [previews,   setPreviews]   = useState<string[]>([]);   // object URLs for new files
-  const [fileError,  setFileError]  = useState('');
-  const [dragOver,   setDragOver]   = useState(false);
+  const [form,         setForm]         = useState<ProductFormData>({ ...EMPTY, ...initial });
+  const [errors,       setErrors]       = useState<Partial<Record<keyof ProductFormData, string>>>({});
+  const [categories,   setCategories]   = useState<Category[]>([]);
+  const [catLoading,   setCatLoading]   = useState(true);
+  const [previews,     setPreviews]     = useState<string[]>([]);
+  const [fileError,    setFileError]    = useState('');
+  const [dragOver,     setDragOver]     = useState(false);
+  const [variantsOpen, setVariantsOpen] = useState(false);
+  const [newVariant,   setNewVariant]   = useState<VariantFormItem>(
+    { type: 'Color', value: '', price: '', mrp: '', stock: '' }
+  );
+  const [customType, setCustomType] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync initial values when they arrive (edit page async load)
   useEffect(() => {
     if (initial) setForm(f => ({ ...f, ...initial }));
+    if (initial?.variants?.length) setVariantsOpen(true);
   }, [initial]);
 
-  // Fetch categories
   useEffect(() => {
     const token = localStorage.getItem('token');
     fetch('/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } })
@@ -75,17 +94,15 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
       .finally(() => setCatLoading(false));
   }, []);
 
-  // Revoke stale object URLs on unmount
-  useEffect(() => () => { previews.forEach(URL.revokeObjectURL); }, []); // eslint-disable-line
-
-  // ── Field helpers ─────────────────────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => { previews.forEach(URL.revokeObjectURL); }, []);
 
   function set<K extends keyof ProductFormData>(k: K, v: ProductFormData[K]) {
     setForm(f => ({ ...f, [k]: v }));
     setErrors(e => ({ ...e, [k]: '' }));
   }
 
-  // ── File handling ─────────────────────────────────────────────────────────
+  // ── File handling ──────────────────────────────────────────────────────────
 
   function addFiles(rawFiles: FileList | File[]) {
     setFileError('');
@@ -112,10 +129,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
       accepted.push(file);
     }
 
-    if (rejected.length) {
-      setFileError(rejected.join('; '));
-    }
-
+    if (rejected.length) setFileError(rejected.join('; '));
     if (!accepted.length) return;
 
     const newPreviews = accepted.map(f => URL.createObjectURL(f));
@@ -135,7 +149,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
 
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files) addFiles(e.target.files);
-    e.target.value = '';   // allow re-selecting same file
+    e.target.value = '';
   }
 
   function onDrop(e: React.DragEvent) {
@@ -144,7 +158,34 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
     if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
   }
 
-  // ── Validation ────────────────────────────────────────────────────────────
+  // ── Variant handling ───────────────────────────────────────────────────────
+
+  const effectiveType = newVariant.type === '__custom__' ? customType.trim() : newVariant.type;
+
+  function addVariant() {
+    if (!effectiveType || !newVariant.value.trim()) return;
+    const item: VariantFormItem = {
+      type:  effectiveType,
+      value: newVariant.value.trim(),
+      price: newVariant.price.trim(),
+      mrp:   newVariant.mrp.trim(),
+      stock: newVariant.stock.trim(),
+    };
+    setForm(f => ({ ...f, variants: [...f.variants, item] }));
+    setNewVariant(v => ({ ...v, value: '', price: '', mrp: '', stock: '' }));
+  }
+
+  function removeVariant(idx: number) {
+    setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }));
+  }
+
+  // Group variants by type for display
+  const variantGroups = form.variants.reduce<Record<string, number[]>>((acc, v, i) => {
+    (acc[v.type] ??= []).push(i);
+    return acc;
+  }, {});
+
+  // ── Validation ─────────────────────────────────────────────────────────────
 
   function validate(): boolean {
     const e: Partial<Record<keyof ProductFormData, string>> = {};
@@ -160,7 +201,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
     return Object.keys(e).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     if (!validate() || loading) return;
     await onSubmit(form);
@@ -168,7 +209,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
 
   const totalImages = form.existingImages.length + form.files.length;
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -184,7 +225,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ── Left column ─────────────────────────────────────────── */}
+        {/* ── Left column ───────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-4">
 
           {/* Name */}
@@ -294,7 +335,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
           </div>
         </div>
 
-        {/* ── Right column: image upload ───────────────────────────── */}
+        {/* ── Right column: image upload ─────────────────────────────── */}
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -309,17 +350,16 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
               )}
             </div>
 
-            {/* Drag-and-drop zone */}
             {totalImages < MAX_FILE_COUNT && (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); setDragOver(true);  }}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={onDrop}
                 className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2
                             border-dashed cursor-pointer transition-colors py-8
                             ${dragOver
-                              ? 'border-primary bg-blue-50'
+                              ? 'border-primary bg-accent-light'
                               : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'}`}
               >
                 <UploadCloud size={28} className={dragOver ? 'text-primary' : 'text-gray-400'} />
@@ -334,7 +374,6 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
               </div>
             )}
 
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -344,7 +383,6 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
               onChange={onInputChange}
             />
 
-            {/* File error */}
             {fileError && (
               <div className="mt-2 flex items-start gap-1.5 text-xs text-red-500">
                 <AlertCircle size={12} className="flex-shrink-0 mt-0.5" />
@@ -395,7 +433,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
               <div className="grid grid-cols-3 gap-2">
                 {previews.map((src, i) => (
                   <div key={src} className="relative group rounded-lg overflow-hidden
-                                            border border-blue-200 bg-blue-50 aspect-square">
+                                            border border-rose-200 bg-accent-light aspect-square">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt={`new${i}`}
                       className="w-full h-full object-contain p-1" />
@@ -432,6 +470,178 @@ export default function ProductForm({ initial, onSubmit, submitLabel, loading, e
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Variants section (full width) ───────────────────────────────────── */}
+      <div className="border border-gray-200 rounded-xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setVariantsOpen(o => !o)}
+          className="w-full flex items-center justify-between px-5 py-3.5
+                     bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">Variants</span>
+            <span className="text-xs text-gray-400">(Color, Storage, RAM, Size — optional)</span>
+            {form.variants.length > 0 && (
+              <span className="text-[10px] font-bold bg-primary text-white
+                               px-2 py-0.5 rounded-full">
+                {form.variants.length}
+              </span>
+            )}
+          </div>
+          {variantsOpen
+            ? <ChevronUp   size={16} className="text-gray-500" />
+            : <ChevronDown size={16} className="text-gray-500" />}
+        </button>
+
+        {variantsOpen && (
+          <div className="p-5 space-y-4">
+
+            {/* Existing variants grouped by type */}
+            {Object.entries(variantGroups).map(([type, indices]) => (
+              <div key={type}>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  {type}
+                </p>
+                <div className="space-y-1.5">
+                  {indices.map(idx => {
+                    const v = form.variants[idx];
+                    return (
+                      <div key={idx}
+                        className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2
+                                   border border-gray-200 text-xs">
+                        <span className="font-semibold text-gray-800 min-w-[80px]">{v.value}</span>
+                        {v.price && (
+                          <span className="text-gray-500">₹{v.price}</span>
+                        )}
+                        {v.mrp && (
+                          <span className="text-gray-400 line-through text-[10px]">₹{v.mrp}</span>
+                        )}
+                        {v.stock && (
+                          <span className="text-gray-500">Stock: {v.stock}</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeVariant(idx)}
+                          className="ml-auto text-red-400 hover:text-red-600 transition-colors"
+                          title="Remove"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Add new variant row */}
+            <div className="border border-dashed border-gray-300 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-600">Add Variant Option</p>
+
+              {/* Type selector */}
+              <div className="flex flex-wrap gap-2">
+                {VARIANT_TYPE_PRESETS.map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setNewVariant(v => ({ ...v, type: t }))}
+                    className={`px-3 py-1 text-xs rounded-full border font-medium transition-all
+                               ${newVariant.type === t
+                                 ? 'bg-primary text-white border-primary'
+                                 : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary'}`}
+                  >
+                    {t}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setNewVariant(v => ({ ...v, type: '__custom__' }))}
+                  className={`px-3 py-1 text-xs rounded-full border font-medium transition-all
+                             ${newVariant.type === '__custom__'
+                               ? 'bg-primary text-white border-primary'
+                               : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary'}`}
+                >
+                  Custom…
+                </button>
+              </div>
+
+              {/* Custom type input */}
+              {newVariant.type === '__custom__' && (
+                <input
+                  type="text"
+                  value={customType}
+                  onChange={e => setCustomType(e.target.value)}
+                  placeholder="e.g. Material, Capacity, Finish…"
+                  className={smInp}
+                />
+              )}
+
+              {/* Value + overrides */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-0.5">
+                    Value <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newVariant.value}
+                    onChange={e => setNewVariant(v => ({ ...v, value: e.target.value }))}
+                    placeholder={
+                      newVariant.type === 'Color'   ? 'e.g. Black'
+                      : newVariant.type === 'Storage' ? 'e.g. 256GB'
+                      : newVariant.type === 'RAM'     ? 'e.g. 8GB'
+                      : newVariant.type === 'Size'    ? 'e.g. L'
+                      : 'Value'
+                    }
+                    className={smInp}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-0.5">Price ₹ (optional)</label>
+                  <input type="number" min="0"
+                    value={newVariant.price}
+                    onChange={e => setNewVariant(v => ({ ...v, price: e.target.value }))}
+                    placeholder="Override" className={smInp} />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-0.5">MRP ₹ (optional)</label>
+                  <input type="number" min="0"
+                    value={newVariant.mrp}
+                    onChange={e => setNewVariant(v => ({ ...v, mrp: e.target.value }))}
+                    placeholder="Override" className={smInp} />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-0.5">Stock (optional)</label>
+                  <input type="number" min="0"
+                    value={newVariant.stock}
+                    onChange={e => setNewVariant(v => ({ ...v, stock: e.target.value }))}
+                    placeholder="Override" className={smInp} />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={addVariant}
+                disabled={!effectiveType || !newVariant.value.trim()}
+                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold
+                           bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors
+                           disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus size={12} />
+                Add Option
+              </button>
+            </div>
+
+            {form.variants.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-2">
+                No variants added yet. Use the form above to add Color, Storage, RAM, or Size options.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Submit */}

@@ -6,6 +6,7 @@ import {
   Plus, Search, Pencil, Trash2, Package,
   Loader2, ChevronLeft, ChevronRight,
   CheckCircle2, XCircle, Star, X,
+  Eye, EyeOff,
 } from 'lucide-react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,13 +42,14 @@ export default function AdminProductsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [deletingId,  setDeletingId]  = useState<string | null>(null);
   const [confirmId,   setConfirmId]   = useState<string | null>(null);
+  const [togglingId,  setTogglingId]  = useState<string | null>(null);
 
   const fetchProducts = useCallback(async (q: string, page: number) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token  = localStorage.getItem('token');
       const params = new URLSearchParams({ q, page: String(page), limit: '15' });
-      const res  = await fetch(`/api/admin/products?${params}`, {
+      const res    = await fetch(`/api/admin/products?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -67,6 +69,32 @@ export default function AdminProductsPage() {
     setSearch(searchInput.trim());
   }
 
+  // ── Toggle listing status ────────────────────────────────────────────────
+
+  async function handleToggleListing(id: string, currentlyListed: boolean) {
+    setTogglingId(id);
+    try {
+      const token = localStorage.getItem('token');
+      const res   = await fetch(`/api/admin/products/${id}/listing`, {
+        method:  'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      // Optimistic local update — no full reload needed
+      setProducts(p =>
+        p.map(x => x._id === id ? { ...x, isListed: data.isListed } : x)
+      );
+      push('success', currentlyListed ? 'Product de-listed' : 'Product listed');
+    } catch (err: unknown) {
+      push('error', err instanceof Error ? err.message : 'Failed to update listing');
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  // ── Delete ───────────────────────────────────────────────────────────────
+
   async function handleDelete(id: string) {
     setDeletingId(id);
     try {
@@ -79,7 +107,7 @@ export default function AdminProductsPage() {
       if (!res.ok) throw new Error(data.message);
       setProducts(p => p.filter(x => x._id !== id));
       setMeta(m => ({ ...m, total: m.total - 1 }));
-      push('success', 'Product deleted successfully');
+      push('success', 'Product deleted');
     } catch (err: unknown) {
       push('error', err instanceof Error ? err.message : 'Delete failed');
     } finally {
@@ -87,6 +115,9 @@ export default function AdminProductsPage() {
       setConfirmId(null);
     }
   }
+
+  const listed   = products.filter((p: Product) => p.isListed !== false).length;
+  const delisted = products.filter((p: Product) => p.isListed === false).length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-5">
@@ -110,9 +141,21 @@ export default function AdminProductsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {meta.total} product{meta.total !== 1 ? 's' : ''} in catalogue
-          </p>
+          <div className="flex items-center gap-3 mt-0.5">
+            <p className="text-sm text-gray-500">{meta.total} total</p>
+            {!loading && (
+              <>
+                <span className="flex items-center gap-1 text-xs font-medium text-green-600">
+                  <Eye size={12} /> {listed} listed
+                </span>
+                {delisted > 0 && (
+                  <span className="flex items-center gap-1 text-xs font-medium text-gray-400">
+                    <EyeOff size={12} /> {delisted} de-listed
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
         <Link
           href="/admin/products/new"
@@ -124,7 +167,7 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
-      {/* Search bar */}
+      {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -137,7 +180,8 @@ export default function AdminProductsPage() {
                        outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
           {searchInput && (
-            <button type="button" onClick={() => { setSearchInput(''); setSearch(''); }}
+            <button type="button"
+              onClick={() => { setSearchInput(''); setSearch(''); }}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
               <X size={13} />
             </button>
@@ -172,115 +216,178 @@ export default function AdminProductsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100 text-left">
-                  <th className="px-4 py-3 font-semibold text-gray-600 w-12">#</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 w-10">#</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Product</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Category</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Price</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600">MRP</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Stock</th>
                   <th className="px-4 py-3 font-semibold text-gray-600 text-center">Featured</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 text-center">Status</th>
                   <th className="px-4 py-3 font-semibold text-gray-600 text-right">Actions</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-gray-100">
-                {products.map((p: Product, idx: number) => (
-                  <tr key={p._id} className="hover:bg-gray-50 transition-colors">
-                    {/* Row # */}
-                    <td className="px-4 py-3 text-gray-400 text-xs">
-                      {(meta.page - 1) * 15 + idx + 1}
-                    </td>
+                {products.map((p: Product, idx: number) => {
+                  const isListed = p.isListed !== false; // default true for older docs
 
-                    {/* Product name + thumbnail */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
-                          {p.images?.[0] ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.images[0]} alt={p.name}
-                              className="w-full h-full object-contain p-1" />
-                          ) : (
-                            <Package size={16} className="text-gray-300 m-auto mt-3" />
-                          )}
+                  return (
+                    <tr
+                      key={p._id}
+                      className={`transition-colors
+                        ${isListed
+                          ? 'hover:bg-gray-50'
+                          : 'bg-gray-50/70 hover:bg-gray-100/60'}`}
+                    >
+                      {/* Row # */}
+                      <td className="px-4 py-3 text-gray-400 text-xs">
+                        {(meta.page - 1) * 15 + idx + 1}
+                      </td>
+
+                      {/* Product + thumbnail */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden
+                                          ${isListed ? 'bg-gray-100' : 'bg-gray-200'}`}>
+                            {p.images?.[0] ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={p.images[0]} alt={p.name}
+                                className={`w-full h-full object-contain p-1
+                                            ${isListed ? '' : 'opacity-50'}`} />
+                            ) : (
+                              <Package size={16} className="text-gray-300 m-auto mt-3" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`font-medium truncate max-w-[180px]
+                                          ${isListed ? 'text-gray-800' : 'text-gray-400'}`}>
+                              {p.name}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {p.brand && (
+                                <span className="text-xs text-gray-400">{p.brand}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-800 truncate max-w-[200px]">{p.name}</p>
-                          {p.brand && <p className="text-xs text-gray-500">{p.brand}</p>}
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Category */}
-                    <td className="px-4 py-3 text-gray-600">
-                      {p.category?.name ?? <span className="text-gray-300">—</span>}
-                    </td>
+                      {/* Category */}
+                      <td className={`px-4 py-3 ${isListed ? 'text-gray-600' : 'text-gray-400'}`}>
+                        {p.category?.name ?? <span className="text-gray-300">—</span>}
+                      </td>
 
-                    {/* Price */}
-                    <td className="px-4 py-3 font-semibold text-gray-900">{fmt(p.price)}</td>
+                      {/* Price */}
+                      <td className={`px-4 py-3 font-semibold
+                                     ${isListed ? 'text-gray-900' : 'text-gray-400'}`}>
+                        {fmt(p.price)}
+                      </td>
 
-                    {/* MRP */}
-                    <td className="px-4 py-3 text-gray-500 line-through">{fmt(p.mrp)}</td>
+                      {/* Stock */}
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full
+                                          text-xs font-medium
+                                          ${!isListed
+                                            ? 'bg-gray-100 text-gray-400'
+                                            : p.stock > 10
+                                              ? 'bg-green-100 text-green-700'
+                                              : p.stock > 0
+                                                ? 'bg-yellow-100 text-yellow-700'
+                                                : 'bg-red-100 text-red-700'}`}>
+                          {p.stock > 0 ? p.stock : 'Out'}
+                        </span>
+                      </td>
 
-                    {/* Stock */}
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                        ${p.stock > 10
-                                          ? 'bg-green-100 text-green-700'
-                                          : p.stock > 0
-                                            ? 'bg-yellow-100 text-yellow-700'
-                                            : 'bg-red-100 text-red-700'}`}>
-                        {p.stock > 0 ? p.stock : 'Out'}
-                      </span>
-                    </td>
+                      {/* Featured */}
+                      <td className="px-4 py-3 text-center">
+                        {p.isFeatured && isListed
+                          ? <Star size={15} className="text-yellow-500 fill-yellow-400 inline" />
+                          : <span className="text-gray-300 text-xs">—</span>}
+                      </td>
 
-                    {/* Featured */}
-                    <td className="px-4 py-3 text-center">
-                      {p.isFeatured
-                        ? <Star size={15} className="text-yellow-500 fill-yellow-400 inline" />
-                        : <span className="text-gray-300 text-xs">—</span>}
-                    </td>
+                      {/* Status badge */}
+                      <td className="px-4 py-3 text-center">
+                        {isListed ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                           text-[11px] font-semibold bg-green-100 text-green-700">
+                            <Eye size={10} />
+                            Live
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                           text-[11px] font-semibold bg-gray-200 text-gray-500">
+                            <EyeOff size={10} />
+                            De-listed
+                          </span>
+                        )}
+                      </td>
 
-                    {/* Actions */}
-                    <td className="px-4 py-3">
-                      {confirmId === p._id ? (
-                        <div className="flex items-center gap-2 justify-end">
-                          <span className="text-xs text-gray-600 whitespace-nowrap">Delete?</span>
-                          <button
-                            onClick={() => handleDelete(p._id)}
-                            disabled={deletingId === p._id}
-                            className="text-xs font-semibold text-red-600 hover:text-red-800
-                                       disabled:opacity-50"
-                          >
-                            {deletingId === p._id ? <Loader2 size={12} className="animate-spin" /> : 'Yes'}
-                          </button>
-                          <button
-                            onClick={() => setConfirmId(null)}
-                            className="text-xs font-semibold text-gray-500 hover:text-gray-700"
-                          >
-                            No
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 justify-end">
-                          <Link
-                            href={`/admin/products/${p._id}/edit`}
-                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50
-                                       transition-colors"
-                            title="Edit"
-                          >
-                            <Pencil size={14} />
-                          </Link>
-                          <button
-                            onClick={() => setConfirmId(p._id)}
-                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        {confirmId === p._id ? (
+                          <div className="flex items-center gap-2 justify-end">
+                            <span className="text-xs text-gray-600 whitespace-nowrap">Delete?</span>
+                            <button
+                              onClick={() => handleDelete(p._id)}
+                              disabled={!!deletingId}
+                              className="text-xs font-semibold text-red-600 hover:text-red-800
+                                         disabled:opacity-50"
+                            >
+                              {deletingId === p._id
+                                ? <Loader2 size={12} className="animate-spin" />
+                                : 'Yes'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmId(null)}
+                              className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 justify-end">
+                            {/* Edit */}
+                            <Link
+                              href={`/admin/products/${p._id}/edit`}
+                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50
+                                         transition-colors"
+                              title="Edit"
+                            >
+                              <Pencil size={14} />
+                            </Link>
+
+                            {/* De-list / Re-list toggle */}
+                            <button
+                              onClick={() => handleToggleListing(p._id, isListed)}
+                              disabled={togglingId === p._id}
+                              title={isListed ? 'De-list (hide from users)' : 'Re-list (make visible)'}
+                              className={`p-1.5 rounded-lg transition-colors disabled:opacity-50
+                                         ${isListed
+                                           ? 'text-amber-500 hover:bg-amber-50'
+                                           : 'text-green-600 hover:bg-green-50'}`}
+                            >
+                              {togglingId === p._id
+                                ? <Loader2 size={14} className="animate-spin" />
+                                : isListed
+                                  ? <EyeOff size={14} />
+                                  : <Eye    size={14} />}
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => setConfirmId(p._id)}
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50
+                                         transition-colors"
+                              title="Delete permanently"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -290,9 +397,7 @@ export default function AdminProductsPage() {
         {!loading && meta.pages > 1 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100
                           bg-gray-50 text-sm">
-            <span className="text-gray-500">
-              Page {meta.page} of {meta.pages}
-            </span>
+            <span className="text-gray-500">Page {meta.page} of {meta.pages}</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchProducts(search, meta.page - 1)}

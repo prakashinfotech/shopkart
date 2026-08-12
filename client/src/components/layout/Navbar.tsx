@@ -116,10 +116,10 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex-shrink-0 flex flex-col leading-none mr-2">
           <span className="text-white font-bold text-xl tracking-tight">
-            Shop<span className="text-yellow-300">Kart</span>
+            Shop<span className="text-accent">Kart</span>
           </span>
-          <span className="text-blue-200 text-[10px] italic -mt-0.5 hidden sm:block">
-            Explore <span className="text-yellow-300">Plus</span> ✦
+          <span className="text-gray-400 text-[10px] italic -mt-0.5 hidden sm:block">
+            Explore <span className="text-accent">Plus</span> ✦
           </span>
         </Link>
 
@@ -158,7 +158,7 @@ export default function Navbar() {
               <button
                 onClick={() => submitSearch(query)}
                 className="bg-primary-dark text-white px-4 text-sm font-semibold
-                           hover:bg-blue-800 transition-colors flex items-center gap-1 flex-shrink-0"
+                           hover:bg-black transition-colors flex items-center gap-1 flex-shrink-0"
                 aria-label="Search"
               >
                 <Search size={14} />
@@ -265,14 +265,14 @@ export default function Navbar() {
           {user?.role === 'admin' ? (
             <Link
               href="/admin"
-              className="flex items-center gap-1.5 text-yellow-300 text-sm font-semibold
+              className="flex items-center gap-1.5 text-accent text-sm font-semibold
                          px-3 py-1.5 hover:text-white transition-colors whitespace-nowrap"
             >
               <LayoutDashboard size={15} />
               Admin
             </Link>
           ) : (
-            <button className="text-white text-sm font-semibold px-3 py-1.5 hover:text-yellow-300
+            <button className="text-white text-sm font-semibold px-3 py-1.5 hover:text-accent
                                transition-colors whitespace-nowrap">
               Become a Seller
             </button>
@@ -281,7 +281,7 @@ export default function Navbar() {
           {/* Cart */}
           <Link href="/cart"
             className="relative flex items-center gap-1.5 text-white text-sm
-                       font-semibold px-3 py-1.5 hover:text-yellow-300 transition-colors">
+                       font-semibold px-3 py-1.5 hover:text-accent transition-colors">
             <div className="relative">
               <ShoppingCart size={20} />
               {cartCount > 0 && (
@@ -317,7 +317,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 animate-fade-in">
           {user && (
-            <div className={`px-5 py-3 border-b ${user.role === 'admin' ? 'bg-purple-50 border-purple-100' : 'bg-blue-50 border-blue-100'}`}>
+            <div className={`px-5 py-3 border-b ${user.role === 'admin' ? 'bg-purple-50 border-purple-100' : 'bg-accent-light border-rose-100'}`}>
               <p className="text-sm font-semibold text-gray-800">{user.name}</p>
               <p className="text-xs text-muted">{user.email}</p>
               {user.role === 'admin' && (

@@ -19,8 +19,15 @@ function productToForm(p: AnyProduct): Partial<ProductFormData> {
     mrp:            String(p.mrp     ?? ''),
     stock:          String(p.stock   ?? 0),
     isFeatured:     Boolean(p.isFeatured),
-    files:          [],                     // no pre-selected files
-    existingImages: p.images ?? [],         // currently stored image paths
+    files:          [],
+    existingImages: p.images ?? [],
+    variants:       (p.variants ?? []).map((v: AnyProduct) => ({
+      type:  v.type  ?? '',
+      value: v.value ?? '',
+      price: v.price != null ? String(v.price) : '',
+      mrp:   v.mrp   != null ? String(v.mrp)   : '',
+      stock: v.stock != null ? String(v.stock)  : '',
+    })),
   };
 }
 
@@ -63,6 +70,7 @@ export default function EditProductPage() {
       fd.append('mrp',         form.mrp);
       fd.append('stock',       form.stock || '0');
       fd.append('isFeatured',  String(form.isFeatured));
+      fd.append('variants',    JSON.stringify(form.variants));
 
       if (form.files.length > 0) {
         // New files selected — upload them (replaces all images)

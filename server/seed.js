@@ -12,9 +12,167 @@ import Review from './models/Review.js';
 const SALT = 10;
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-const ri = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const ri   = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 const pick = (arr, n) => [...arr].sort(() => Math.random() - 0.5).slice(0, Math.min(n, arr.length));
+
+// ─── Curated product images (Unsplash CDN — stable, high-quality, free) ───────
+// Format: https://images.unsplash.com/photo-{ID}?w=800&q=80&auto=format&fit=crop
+const U = (id) => `https://images.unsplash.com/photo-${id}?w=800&q=80&auto=format&fit=crop`;
+
+const CURATED = {
+  // ── Smartphones (flagship) ────────────────────────────────────────────────────
+  's24u':        [U('1610945265064-0e34e5519bbf'), U('1601784551446-4bb82b12ab9d'), U('1512941937669-90a1b58e7e9c')],
+  'iphone15pm':  [U('1592750475338-74b7b21085ab'), U('1510557880182-3d4d3cba35a5'), U('1580910051074-3671e7d43a6f')],
+  'op12r':       [U('1512941937669-90a1b58e7e9c'), U('1580910051074-3671e7d43a6f'), U('1598327105666-5b89351aff97')],
+  'redminote13': [U('1598327105666-5b89351aff97'), U('1512941937669-90a1b58e7e9c'), U('1616348436168-de954834f041')],
+  'pixel8':      [U('1565849904461-04a58ad377e0'), U('1512941937669-90a1b58e7e9c'), U('1580910051074-3671e7d43a6f')],
+  'nothing2a':   [U('1616348436168-de954834f041'), U('1512941937669-90a1b58e7e9c'), U('1598327105666-5b89351aff97')],
+  'vivov30':     [U('1598327105666-5b89351aff97'), U('1607936854279-5e38e5b3b3a7'), U('1512941937669-90a1b58e7e9c')],
+  'realmegt6t':  [U('1580910051074-3671e7d43a6f'), U('1512941937669-90a1b58e7e9c'), U('1565849904461-04a58ad377e0')],
+
+  // ── Mobile Phones (mid-range) ─────────────────────────────────────────────────
+  'samsung-m34':      [U('1610945265064-0e34e5519bbf'), U('1601784551446-4bb82b12ab9d'), U('1512941937669-90a1b58e7e9c')],
+  'redmi-12-5g':      [U('1565849904461-04a58ad377e0'), U('1598327105666-5b89351aff97'), U('1616348436168-de954834f041')],
+  'realme-narzo60':   [U('1580910051074-3671e7d43a6f'), U('1512941937669-90a1b58e7e9c'), U('1607936854279-5e38e5b3b3a7')],
+  'oneplus-nordce3':  [U('1616348436168-de954834f041'), U('1512941937669-90a1b58e7e9c'), U('1580910051074-3671e7d43a6f')],
+  'poco-x6pro':       [U('1512941937669-90a1b58e7e9c'), U('1565849904461-04a58ad377e0'), U('1601784551446-4bb82b12ab9d')],
+  'iqoo-z9':          [U('1598327105666-5b89351aff97'), U('1580910051074-3671e7d43a6f'), U('1512941937669-90a1b58e7e9c')],
+  'moto-edge40neo':   [U('1601784551446-4bb82b12ab9d'), U('1610945265064-0e34e5519bbf'), U('1565849904461-04a58ad377e0')],
+  'vivo-t2pro':       [U('1607936854279-5e38e5b3b3a7'), U('1598327105666-5b89351aff97'), U('1512941937669-90a1b58e7e9c')],
+
+  // ── Mobile Accessories ────────────────────────────────────────────────────────
+  'anker-gancharger':  [U('1586864387967-d02ef85d93e8'), U('1593642632559-0c6d3fc62b89'), U('1583864697784-a0efc8379f70')],
+  'boat-bassheads100': [U('1484704849700-f032a568e944'), U('1505740420928-5e560c06d30e'), U('1618609255-f7a6b8a49df9')],
+  'spigen-iphone15':   [U('1592750475338-74b7b21085ab'), U('1580910051074-3671e7d43a6f'), U('1510557880182-3d4d3cba35a5')],
+
+  // ── Laptops ───────────────────────────────────────────────────────────────────
+  'macbookairm2': [U('1496181133206-80ce9b88a853'), U('1517336714731-489689fd1ca8'), U('1531297484001-80022131f5a1')],
+  'dellxps15':    [U('1541807084-5c52e6e76cf4'), U('1588872657578-7efd1f1555ef'), U('1496181133206-80ce9b88a853')],
+  'thinkpade14':  [U('1531297484001-80022131f5a1'), U('1496181133206-80ce9b88a853'), U('1588872657578-7efd1f1555ef')],
+  'zenbook14':    [U('1517336714731-489689fd1ca8'), U('1541807084-5c52e6e76cf4'), U('1496181133206-80ce9b88a853')],
+  'hppavilion':   [U('1588872657578-7efd1f1555ef'), U('1531297484001-80022131f5a1'), U('1517336714731-489689fd1ca8')],
+  'acerasp7':     [U('1496181133206-80ce9b88a853'), U('1541807084-5c52e6e76cf4'), U('1517336714731-489689fd1ca8')],
+
+  // ── Tablets ───────────────────────────────────────────────────────────────────
+  'ipadairm1':  [U('1589739900243-4b52cd9b104e'), U('1544244015-0df4b3ffc6b0'), U('1589739900243-4b52cd9b104e')],
+  'tabs9fe':    [U('1544244015-0df4b3ffc6b0'), U('1589739900243-4b52cd9b104e'), U('1544244015-0df4b3ffc6b0')],
+  'lenovotab':  [U('1589739900243-4b52cd9b104e'), U('1544244015-0df4b3ffc6b0'), U('1589739900243-4b52cd9b104e')],
+  'xiaomipad6': [U('1544244015-0df4b3ffc6b0'), U('1589739900243-4b52cd9b104e'), U('1544244015-0df4b3ffc6b0')],
+
+  // ── Audio ─────────────────────────────────────────────────────────────────────
+  'sonywh1000':  [U('1505740420928-5e560c06d30e'), U('1484704849700-f032a568e944'), U('1618609255-f7a6b8a49df9')],
+  'airpodspro2': [U('1484704849700-f032a568e944'), U('1618609255-f7a6b8a49df9'), U('1505740420928-5e560c06d30e')],
+  'jblflip6':    [U('1608043152269-423dbba4e7e1'), U('1572536147248-ac59a8abfa4b'), U('1608041344986-9ba990c3fdf8')],
+  'boatrockz':   [U('1618609255-f7a6b8a49df9'), U('1505740420928-5e560c06d30e'), U('1484704849700-f032a568e944')],
+  'boseqc45':    [U('1484704849700-f032a568e944'), U('1618609255-f7a6b8a49df9'), U('1505740420928-5e560c06d30e')],
+
+  // ── Cameras ───────────────────────────────────────────────────────────────────
+  'canoneosr50': [U('1516035069371-29a1b244cc32'), U('1563738942-40e46ee19e6b'), U('1510127034890-ba27b985da55')],
+  'sonyzve10':   [U('1563738942-40e46ee19e6b'), U('1516035069371-29a1b244cc32'), U('1510127034890-ba27b985da55')],
+  'nikonz30':    [U('1510127034890-ba27b985da55'), U('1516035069371-29a1b244cc32'), U('1563738942-40e46ee19e6b')],
+
+  // ── Men's Clothing ────────────────────────────────────────────────────────────
+  'levisjeans':       [U('1542272604-787c3835535d'), U('1591047139829-d91aecb6caea'), U('1602810318383-e386cc2a3ccf')],
+  'allensollyformal': [U('1602810318383-e386cc2a3ccf'), U('1591047139829-d91aecb6caea'), U('1542272604-787c3835535d')],
+  'niketshirt':       [U('1591047139829-d91aecb6caea'), U('1602810318383-e386cc2a3ccf'), U('1542272604-787c3835535d')],
+  'pechinos':         [U('1542272604-787c3835535d'), U('1602810318383-e386cc2a3ccf'), U('1591047139829-d91aecb6caea')],
+  'tommypolo':        [U('1602810318383-e386cc2a3ccf'), U('1542272604-787c3835535d'), U('1591047139829-d91aecb6caea')],
+
+  // ── Women's Clothing ──────────────────────────────────────────────────────────
+  'bibaanarkali':  [U('1490481651871-ab68de25d43d'), U('1515886657613-9f3515b0c78f'), U('1489987707025-afc232f7ea0f')],
+  'wkurta':        [U('1489987707025-afc232f7ea0f'), U('1490481651871-ab68de25d43d'), U('1515886657613-9f3515b0c78f')],
+  'hmwrapdress':   [U('1515886657613-9f3515b0c78f'), U('1489987707025-afc232f7ea0f'), U('1490481651871-ab68de25d43d')],
+  'libassuitset':  [U('1490481651871-ab68de25d43d'), U('1515886657613-9f3515b0c78f'), U('1489987707025-afc232f7ea0f')],
+  'aureliapalazo': [U('1515886657613-9f3515b0c78f'), U('1490481651871-ab68de25d43d'), U('1489987707025-afc232f7ea0f')],
+
+  // ── Footwear ──────────────────────────────────────────────────────────────────
+  'nikeairmax':       [U('1542291026-7eec264c27ff'), U('1595950653106-6c9ebd614d3a'), U('1460355976672-e86659d2a4dc')],
+  'adidasultraboost': [U('1595950653106-6c9ebd614d3a'), U('1542291026-7eec264c27ff'), U('1460355976672-e86659d2a4dc')],
+  'pumasoftride':     [U('1460355976672-e86659d2a4dc'), U('1542291026-7eec264c27ff'), U('1595950653106-6c9ebd614d3a')],
+  'bataoxford':       [U('1542291026-7eec264c27ff'), U('1460355976672-e86659d2a4dc'), U('1595950653106-6c9ebd614d3a')],
+  'skechersgowalk':   [U('1595950653106-6c9ebd614d3a'), U('1460355976672-e86659d2a4dc'), U('1542291026-7eec264c27ff')],
+
+  // ── Kitchen Appliances ────────────────────────────────────────────────────────
+  'prestigemixer':   [U('1556909114-f6e7ad7d3136'), U('1585515320310-259814833e62'), U('1585747860715-2ba37e788b70')],
+  'lgmicrowave':     [U('1585515320310-259814833e62'), U('1556909114-f6e7ad7d3136'), U('1585747860715-2ba37e788b70')],
+  'philipsairfryer': [U('1585747860715-2ba37e788b70'), U('1556909114-f6e7ad7d3136'), U('1585515320310-259814833e62')],
+  'pigeonpc':        [U('1556909114-f6e7ad7d3136'), U('1585515320310-259814833e62'), U('1585747860715-2ba37e788b70')],
+  'instantpot':      [U('1585515320310-259814833e62'), U('1585747860715-2ba37e788b70'), U('1556909114-f6e7ad7d3136')],
+
+  // ── Home Decor ────────────────────────────────────────────────────────────────
+  'nilkamalchair': [U('1555041469-a586c61ea9bc'), U('1493552152781-9b1c7c41cc78'), U('1540518614846-7eded433c457')],
+  'bedsheet':      [U('1540518614846-7eded433c457'), U('1555041469-a586c61ea9bc'), U('1493552152781-9b1c7c41cc78')],
+  'wallclock':     [U('1493552152781-9b1c7c41cc78'), U('1555041469-a586c61ea9bc'), U('1540518614846-7eded433c457')],
+  'decorvase':     [U('1555041469-a586c61ea9bc'), U('1540518614846-7eded433c457'), U('1493552152781-9b1c7c41cc78')],
+
+  // ── Sports & Fitness ─────────────────────────────────────────────────────────
+  'hexdumbbell': [U('1517836357463-d25dfeac3438'), U('1571019613454-1cb2f99b2d8b'), U('1518611012118-696072aa579a')],
+  'yogamat':     [U('1518611012118-696072aa579a'), U('1571019613454-1cb2f99b2d8b'), U('1517836357463-d25dfeac3438')],
+  'spinbike':    [U('1571019613454-1cb2f99b2d8b'), U('1517836357463-d25dfeac3438'), U('1518611012118-696072aa579a')],
+  'cricketbat':  [U('1517836357463-d25dfeac3438'), U('1518611012118-696072aa579a'), U('1571019613454-1cb2f99b2d8b')],
+
+  // ── Books ─────────────────────────────────────────────────────────────────────
+  'alchemist':   [U('1524995997946-a1c2e315a42f'), U('1497633762265-9d179a990aa6'), U('1456513080510-7bf3a84b82f8')],
+  'wingsoffire': [U('1497633762265-9d179a990aa6'), U('1524995997946-a1c2e315a42f'), U('1456513080510-7bf3a84b82f8')],
+  'atomichabits':[U('1456513080510-7bf3a84b82f8'), U('1524995997946-a1c2e315a42f'), U('1497633762265-9d179a990aa6')],
+  'psychmoney':  [U('1524995997946-a1c2e315a42f'), U('1456513080510-7bf3a84b82f8'), U('1497633762265-9d179a990aa6')],
+
+  // ── Skincare ──────────────────────────────────────────────────────────────────
+  'minimalist-niacinamide': [U('1556228852-6d35a585d2d6'), U('1629198735660-e39ea93f5f22'), U('1571781926291-c477ebfd024b')],
+  'dotkey-vitc':            [U('1629198735660-e39ea93f5f22'), U('1556228852-6d35a585d2d6'), U('1620916566398-39f1143ab7be')],
+  'cetaphil-cream':         [U('1571781926291-c477ebfd024b'), U('1556228852-6d35a585d2d6'), U('1629198735660-e39ea93f5f22')],
+  'neutrogena-hydroboost':  [U('1620916566398-39f1143ab7be'), U('1629198735660-e39ea93f5f22'), U('1571781926291-c477ebfd024b')],
+  'plum-greentea-toner':    [U('1556228852-6d35a585d2d6'), U('1571781926291-c477ebfd024b'), U('1629198735660-e39ea93f5f22')],
+  'wow-vitc-facewash':      [U('1571781926291-c477ebfd024b'), U('1620916566398-39f1143ab7be'), U('1556228852-6d35a585d2d6')],
+  'lashield-sunscreen':     [U('1629198735660-e39ea93f5f22'), U('1620916566398-39f1143ab7be'), U('1556228852-6d35a585d2d6')],
+
+  // ── Makeup ────────────────────────────────────────────────────────────────────
+  'maybelline-fitme':    [U('1522335789203-aabd1fc54bc9'), U('1583241475880-083f84372725'), U('1543637219-f5b1a39b3a2a')],
+  'loreal-matte-lip':    [U('1606190498906-70b1a4a44b52'), U('1543637219-f5b1a39b3a2a'), U('1522335789203-aabd1fc54bc9')],
+  'sugar-matte-lip':     [U('1543637219-f5b1a39b3a2a'), U('1606190498906-70b1a4a44b52'), U('1583241475880-083f84372725')],
+  'lakme-kajal':         [U('1583241475880-083f84372725'), U('1522335789203-aabd1fc54bc9'), U('1606190498906-70b1a4a44b52')],
+  'nyx-buttergloss':     [U('1606190498906-70b1a4a44b52'), U('1583241475880-083f84372725'), U('1543637219-f5b1a39b3a2a')],
+  'facescanada-palette': [U('1522335789203-aabd1fc54bc9'), U('1543637219-f5b1a39b3a2a'), U('1583241475880-083f84372725')],
+
+  // ── Hair Care ─────────────────────────────────────────────────────────────────
+  'loreal-shampoo':     [U('1527799820374-dcf8d9d4a388'), U('1515377905703-c4788e51af15'), U('1571781926291-c477ebfd024b')],
+  'tresemme-keratin':   [U('1515377905703-c4788e51af15'), U('1527799820374-dcf8d9d4a388'), U('1571781926291-c477ebfd024b')],
+  'mamaearth-onionoil': [U('1571781926291-c477ebfd024b'), U('1527799820374-dcf8d9d4a388'), U('1515377905703-c4788e51af15')],
+  'dove-conditioner':   [U('1527799820374-dcf8d9d4a388'), U('1571781926291-c477ebfd024b'), U('1515377905703-c4788e51af15')],
+
+  // ── Educational Toys ──────────────────────────────────────────────────────────
+  'lego-classic':            [U('1558618666-fcd25c85cd64'), U('1566576912321-d58ddd7a6088'), U('1587654780291-39c9404d746b')],
+  'fisherprice-learninghome':[U('1566576912321-d58ddd7a6088'), U('1558618666-fcd25c85cd64'), U('1587654780291-39c9404d746b')],
+  'rubiks-cube':             [U('1587654780291-39c9404d746b'), U('1558618666-fcd25c85cd64'), U('1566576912321-d58ddd7a6088')],
+  'funskool-monopoly':       [U('1558618666-fcd25c85cd64'), U('1587654780291-39c9404d746b'), U('1566576912321-d58ddd7a6088')],
+  'meccano-set':             [U('1566576912321-d58ddd7a6088'), U('1587654780291-39c9404d746b'), U('1558618666-fcd25c85cd64')],
+  'skillmatics-guessin10':   [U('1587654780291-39c9404d746b'), U('1566576912321-d58ddd7a6088'), U('1558618666-fcd25c85cd64')],
+
+  // ── Action Figures ────────────────────────────────────────────────────────────
+  'hotwheels-20pack':    [U('1558618047-3c8c76ca7d13'), U('1564507592333-c60657eea523'), U('1566576912321-d58ddd7a6088')],
+  'marvel-ironman':      [U('1564507592333-c60657eea523'), U('1558618047-3c8c76ca7d13'), U('1587654780291-39c9404d746b')],
+  'chhota-bheem-set':    [U('1566576912321-d58ddd7a6088'), U('1564507592333-c60657eea523'), U('1558618047-3c8c76ca7d13')],
+  'barbie-fashionista':  [U('1558618047-3c8c76ca7d13'), U('1566576912321-d58ddd7a6088'), U('1564507592333-c60657eea523')],
+  'minecraft-creeper':   [U('1564507592333-c60657eea523'), U('1566576912321-d58ddd7a6088'), U('1558618047-3c8c76ca7d13')],
+
+  // ── Bikes ─────────────────────────────────────────────────────────────────────
+  'hero-splendor':     [U('1568772585407-9361f9bf3a87'), U('1558979158-65a1eaa08691'), U('1449426468159-d96dbf08f19f')],
+  'bajaj-pulsarns200': [U('1558979158-65a1eaa08691'), U('1568772585407-9361f9bf3a87'), U('1449426468159-d96dbf08f19f')],
+  're-meteor350':      [U('1449426468159-d96dbf08f19f'), U('1568772585407-9361f9bf3a87'), U('1558979158-65a1eaa08691')],
+  'honda-cbshine':     [U('1568772585407-9361f9bf3a87'), U('1449426468159-d96dbf08f19f'), U('1558979158-65a1eaa08691')],
+  'tvs-apache160':     [U('1558979158-65a1eaa08691'), U('1449426468159-d96dbf08f19f'), U('1568772585407-9361f9bf3a87')],
+  'yamaha-fzs':        [U('1449426468159-d96dbf08f19f'), U('1558979158-65a1eaa08691'), U('1568772585407-9361f9bf3a87')],
+
+  // ── Scooters ──────────────────────────────────────────────────────────────────
+  'honda-activa125':  [U('1568772585407-9361f9bf3a87'), U('1449426468159-d96dbf08f19f'), U('1558979158-65a1eaa08691')],
+  'tvs-jupiter':      [U('1449426468159-d96dbf08f19f'), U('1568772585407-9361f9bf3a87'), U('1558979158-65a1eaa08691')],
+  'suzuki-access125': [U('1558979158-65a1eaa08691'), U('1568772585407-9361f9bf3a87'), U('1449426468159-d96dbf08f19f')],
+  'yamaha-fascino':   [U('1568772585407-9361f9bf3a87'), U('1558979158-65a1eaa08691'), U('1449426468159-d96dbf08f19f')],
+};
+
+// img() — returns curated Unsplash images when available, picsum as fallback
 const img = (seed, n = 3) =>
+  CURATED[seed] ??
   Array.from({ length: n }, (_, i) => `https://picsum.photos/seed/fk-${seed}-${i}/800/800`);
 
 // ─── Category Data ────────────────────────────────────────────────────────────
@@ -24,6 +182,10 @@ const PARENTS = [
   { name: 'Home & Kitchen',    image: 'https://picsum.photos/seed/cat-home/400/300' },
   { name: 'Sports & Fitness',  image: 'https://picsum.photos/seed/cat-sports/400/300' },
   { name: 'Books',             image: 'https://picsum.photos/seed/cat-books/400/300' },
+  { name: 'Mobiles',           image: 'https://picsum.photos/seed/cat-mobiles/400/300' },
+  { name: 'Beauty',            image: 'https://picsum.photos/seed/cat-beauty/400/300' },
+  { name: 'Toys',              image: 'https://picsum.photos/seed/cat-toys/400/300' },
+  { name: 'Two Wheelers',      image: 'https://picsum.photos/seed/cat-twowheelers/400/300' },
 ];
 
 const SUBS = {
@@ -32,6 +194,10 @@ const SUBS = {
   'Home & Kitchen':   ['Kitchen Appliances', 'Home Decor'],
   'Sports & Fitness': ['Exercise Equipment'],
   'Books':            ['Fiction', 'Non-Fiction'],
+  'Mobiles':          ['Mobile Phones', 'Mobile Accessories'],
+  'Beauty':           ['Skincare', 'Makeup', 'Hair Care'],
+  'Toys':             ['Educational Toys', 'Action Figures'],
+  'Two Wheelers':     ['Bikes', 'Scooters'],
 };
 
 const SUB_IMAGES = {
@@ -48,6 +214,15 @@ const SUB_IMAGES = {
   'Exercise Equipment': 'https://picsum.photos/seed/cat-exercise/400/300',
   Fiction:     'https://picsum.photos/seed/cat-fiction/400/300',
   'Non-Fiction': 'https://picsum.photos/seed/cat-nonfiction/400/300',
+  'Mobile Phones':      'https://picsum.photos/seed/cat-mobilephones/400/300',
+  'Mobile Accessories': 'https://picsum.photos/seed/cat-mobileacc/400/300',
+  Skincare:             'https://picsum.photos/seed/cat-skincare/400/300',
+  Makeup:               'https://picsum.photos/seed/cat-makeup/400/300',
+  'Hair Care':          'https://picsum.photos/seed/cat-haircare/400/300',
+  'Educational Toys':   'https://picsum.photos/seed/cat-edutoys/400/300',
+  'Action Figures':     'https://picsum.photos/seed/cat-actionfigure/400/300',
+  Bikes:                'https://picsum.photos/seed/cat-bikes/400/300',
+  Scooters:             'https://picsum.photos/seed/cat-scooters/400/300',
 };
 
 // ─── Product Data (keyed by sub-category name) ────────────────────────────────
@@ -438,6 +613,335 @@ const PRODUCTS = {
       specs: { Author: 'Morgan Housel', Publisher: 'Harriman House', Pages: '256', Language: 'English', Format: 'Paperback', Genre: 'Personal Finance' },
     },
   ],
+
+  // ── Mobiles ──────────────────────────────────────────────────────────────────
+
+  'Mobile Phones': [
+    {
+      name: 'Samsung Galaxy M34 5G (Midnight Blue, 8GB+128GB)', brand: 'Samsung',
+      price: 16999, mrp: 22999, stock: 120, isFeatured: true, images: img('samsung-m34'),
+      description: '6000mAh battery with 25W fast charging. 6.5" FHD+ Super AMOLED 120Hz display. 50MP triple camera with OIS for sharp, stable shots every time.',
+      specs: { Display: '6.5" FHD+ Super AMOLED 120Hz', Processor: 'Exynos 1280', RAM: '8GB', Storage: '128GB', Camera: '50MP + 8MP + 2MP', Battery: '6000mAh', OS: 'Android 14, One UI 6', Charging: '25W' },
+    },
+    {
+      name: 'Redmi 12 5G (Jade Black, 4GB+128GB)', brand: 'Xiaomi',
+      price: 10999, mrp: 14999, stock: 200, images: img('redmi-12-5g'),
+      description: 'Snapdragon 4 Gen 2 with 5G connectivity. 6.79" HD+ 90Hz display. 50MP AI dual camera system with night mode for stunning low-light photos.',
+      specs: { Display: '6.79" HD+ 90Hz IPS', Processor: 'Snapdragon 4 Gen 2', RAM: '4GB', Storage: '128GB', Camera: '50MP + 2MP', Battery: '5000mAh', OS: 'Android 13, MIUI 14', Charging: '18W' },
+    },
+    {
+      name: 'Realme Narzo 60 Pro 5G (Cosmic Black, 8GB+256GB)', brand: 'Realme',
+      price: 17999, mrp: 24999, stock: 90, isFeatured: true, images: img('realme-narzo60'),
+      description: 'MediaTek Dimensity 7050 with 67W SUPERVOOC charging. 6.7" Curved AMOLED 120Hz display. 100MP AI camera with OIS for exceptional photography.',
+      specs: { Display: '6.7" Curved AMOLED 120Hz', Processor: 'Dimensity 7050', RAM: '8GB', Storage: '256GB', Camera: '100MP + 2MP', Battery: '5000mAh', OS: 'Android 13, Realme UI 4.0', Charging: '67W SUPERVOOC' },
+    },
+    {
+      name: 'OnePlus Nord CE 3 Lite 5G (Chromatic Gray, 8GB+128GB)', brand: 'OnePlus',
+      price: 19999, mrp: 25999, stock: 75, images: img('oneplus-nordce3'),
+      description: 'Snapdragon 695 5G with a massive 5000mAh battery and 67W SUPERVOOC charging. 6.72" LCD 120Hz display for smooth scrolling. Triple camera setup.',
+      specs: { Display: '6.72" FHD+ IPS 120Hz', Processor: 'Snapdragon 695 5G', RAM: '8GB', Storage: '128GB', Camera: '108MP + 2MP + 2MP', Battery: '5000mAh', OS: 'Android 13, OxygenOS 13.1', Charging: '67W SUPERVOOC' },
+    },
+    {
+      name: 'Poco X6 Pro 5G (Black, 12GB+256GB)', brand: 'Poco',
+      price: 26999, mrp: 33999, stock: 110, isFeatured: true, images: img('poco-x6pro'),
+      description: 'MediaTek Dimensity 8300 Ultra — the fastest chip in its class. 6.67" 144Hz 1.5K AMOLED display. 64MP OIS triple camera with UltraHD video.',
+      specs: { Display: '6.67" 1.5K AMOLED 144Hz', Processor: 'Dimensity 8300 Ultra', RAM: '12GB', Storage: '256GB', Camera: '64MP OIS + 8MP + 2MP', Battery: '5000mAh', OS: 'Android 14, HyperOS', Charging: '67W Turbo' },
+    },
+    {
+      name: 'iQOO Z9 5G (Brushed Green, 8GB+128GB)', brand: 'iQOO',
+      price: 15999, mrp: 21999, stock: 85, images: img('iqoo-z9'),
+      description: 'Dimensity 7200 with 120Hz curved AMOLED display. 6000mAh dual-cell battery with 44W FlashCharge. 50MP Sony IMX882 OIS primary camera.',
+      specs: { Display: '6.67" AMOLED 120Hz', Processor: 'Dimensity 7200', RAM: '8GB', Storage: '128GB', Camera: '50MP OIS + 2MP', Battery: '6000mAh', OS: 'Android 14, Funtouch OS 14', Charging: '44W FlashCharge' },
+    },
+    {
+      name: 'Motorola Edge 40 Neo (Black Beauty, 12GB+256GB)', brand: 'Motorola',
+      price: 23999, mrp: 31999, stock: 60, images: img('moto-edge40neo'),
+      description: 'Dimensity 7030 with pOLED display and TurboPower 68W charging. IP68 water resistant. 50MP OIS wide camera with Sony sensors for sharp photography.',
+      specs: { Display: '6.55" pOLED 144Hz', Processor: 'Dimensity 7030', RAM: '12GB', Storage: '256GB', Camera: '50MP OIS + 13MP Ultra Wide', Battery: '5000mAh', OS: 'Android 13', Charging: '68W TurboPower', 'Water Resistance': 'IP68' },
+    },
+    {
+      name: 'Vivo T2 Pro 5G (Dazzling Gold, 8GB+128GB)', brand: 'Vivo',
+      price: 21999, mrp: 27999, stock: 70, images: img('vivo-t2pro'),
+      description: 'MediaTek Dimensity 7200 with 67W FlashCharge. 6.78" curved AMOLED 120Hz E4 display. 64MP triple camera with OIS and 4K video recording capability.',
+      specs: { Display: '6.78" Curved AMOLED 120Hz', Processor: 'Dimensity 7200', RAM: '8GB', Storage: '128GB', Camera: '64MP OIS + 8MP + 2MP', Battery: '4600mAh', OS: 'Android 13, Funtouch OS 13', Charging: '67W FlashCharge' },
+    },
+  ],
+
+  'Mobile Accessories': [
+    {
+      name: 'Anker 65W USB-C GaN Fast Charger', brand: 'Anker',
+      price: 1999, mrp: 3499, stock: 250, isFeatured: true, images: img('anker-gancharger'),
+      description: 'Compact 65W GaN charger compatible with all USB-C devices. Charges MacBook, iPhone, Android phones simultaneously. Safety-certified with temperature control.',
+      specs: { Output: '65W Max', Ports: '1x USB-C', Technology: 'GaN', Compatibility: 'Universal USB-C', Safety: 'Multi-protection', Size: 'Compact Foldable Plug', Warranty: '18 Months' },
+    },
+    {
+      name: 'boAt Bassheads 100 Wired Earphones', brand: 'boAt',
+      price: 299, mrp: 699, stock: 500, images: img('boat-bassheads100'),
+      description: '10mm dynamic driver for punchy bass. In-line mic with multi-function button. Tangle-resistant cable with 3.5mm gold-plated jack.',
+      specs: { Driver: '10mm Dynamic', Connector: '3.5mm Gold Plated', Cable: '1.2m Tangle-Free', Mic: 'In-line with Button', Frequency: '20Hz–20kHz', Sensitivity: '98dB' },
+    },
+    {
+      name: 'Spigen Tough Armor iPhone 15 Case', brand: 'Spigen',
+      price: 899, mrp: 1999, stock: 300, images: img('spigen-iphone15'),
+      description: 'Dual-layer protection with Air Cushion Technology for military-grade drop protection. Kickstand and wireless charging compatible.',
+      specs: { Compatibility: 'iPhone 15', Material: 'PC + TPU', Protection: 'Military Grade Drop', 'Wireless Charging': 'Compatible', Kickstand: 'Built-in', Weight: '60g' },
+    },
+  ],
+
+  // ── Beauty ────────────────────────────────────────────────────────────────────
+
+  Skincare: [
+    {
+      name: 'Minimalist 10% Niacinamide Face Serum 30ml', brand: 'Minimalist',
+      price: 349, mrp: 549, stock: 300, isFeatured: true, images: img('minimalist-niacinamide'),
+      description: 'High-strength 10% Niacinamide + 1% Zinc to visibly reduce pores and control sebum. Dermatologist formulated, fragrance-free, non-comedogenic.',
+      specs: { 'Key Ingredient': '10% Niacinamide + 1% Zinc PCA', Volume: '30ml', 'Skin Type': 'All Skin Types', Fragrance: 'Free', pH: '5.5–6.0', Dermatologist: 'Tested', Cruelty: 'Free' },
+    },
+    {
+      name: 'Dot & Key Vitamin C + E Super Bright Serum 20ml', brand: 'Dot & Key',
+      price: 595, mrp: 895, stock: 180, isFeatured: true, images: img('dotkey-vitc'),
+      description: '15% Vitamin C + Vitamin E brightening serum that fades dark spots and evens skin tone. Hyaluronic acid for deep hydration. Dermatologist tested.',
+      specs: { 'Key Ingredient': '15% Vitamin C + Vitamin E', Volume: '20ml', 'Skin Type': 'All Skin Types', 'Key Benefit': 'Brightening + Anti-oxidant', Dermatologist: 'Tested', Cruelty: 'Free', Vegan: 'Yes' },
+    },
+    {
+      name: 'Cetaphil Moisturising Cream 250g', brand: 'Cetaphil',
+      price: 499, mrp: 799, stock: 400, images: img('cetaphil-cream'),
+      description: 'Clinically proven to hydrate and restore dry, sensitive skin for 48 hours. Non-greasy formula absorbed instantly. Dermatologist recommended.',
+      specs: { 'Product Type': 'Moisturising Cream', Volume: '250g', 'Skin Type': 'Dry / Sensitive', 'Key Ingredient': 'Glycerin + Niacinamide', SPF: 'None', Fragrance: 'Free', Paraben: 'Free' },
+    },
+    {
+      name: 'Neutrogena Hydro Boost Water Gel 50g', brand: 'Neutrogena',
+      price: 599, mrp: 999, stock: 220, images: img('neutrogena-hydroboost'),
+      description: 'Non-comedogenic water-gel moisturiser with Hyaluronic Acid that provides continuous 24-hour hydration. Oil-free, lightweight formula for oily skin.',
+      specs: { 'Key Ingredient': 'Hyaluronic Acid', Volume: '50g', 'Skin Type': 'Oily / Combination', Texture: 'Water Gel', Oil: 'Free', Non: 'Comedogenic', SPF: 'None' },
+    },
+    {
+      name: 'Plum Green Tea Alcohol-Free Toner 200ml', brand: 'Plum',
+      price: 275, mrp: 449, stock: 350, images: img('plum-greentea-toner'),
+      description: 'Green Tea-powered alcohol-free toner that mattifies, minimises pores and balances oily skin. 100% vegan, paraben-free with skin-loving antioxidants.',
+      specs: { 'Key Ingredient': 'Green Tea Extract + Glycerin', Volume: '200ml', 'Skin Type': 'Oily / Acne-Prone', Alcohol: 'Free', Vegan: '100%', Paraben: 'Free', pH: '5.0–6.0' },
+    },
+    {
+      name: 'WOW Skin Science Vitamin C Face Wash 100ml', brand: 'WOW',
+      price: 249, mrp: 399, stock: 450, images: img('wow-vitc-facewash'),
+      description: 'Brightening face wash with 15% Vitamin C and Mulberry Extract. Gently cleanses, brightens complexion and reduces dark spots. Sulphate-free formula.',
+      specs: { 'Key Ingredient': '15% Vitamin C + Mulberry', Volume: '100ml', 'Skin Type': 'All Types', 'Sulfate': 'Free', 'Paraben': 'Free', 'Usage': 'Daily Twice', Cruelty: 'Free' },
+    },
+    {
+      name: 'La Shield Sunscreen SPF 50+ PA+++ 60g', brand: 'La Shield',
+      price: 349, mrp: 599, stock: 280, images: img('lashield-sunscreen'),
+      description: 'Dermatologist-recommended broad-spectrum sunscreen SPF 50+. Lightweight, non-sticky formula with no white cast. Water resistant for 80 minutes.',
+      specs: { SPF: '50+ PA+++', Volume: '60g', Coverage: 'Broad Spectrum', Water: 'Resistant 80 min', Texture: 'Gel-Cream', White: 'Cast Free', Dermatologist: 'Recommended' },
+    },
+  ],
+
+  Makeup: [
+    {
+      name: 'Maybelline Fit Me Matte + Poreless Foundation (N30)', brand: 'Maybelline',
+      price: 399, mrp: 649, stock: 300, isFeatured: true, images: img('maybelline-fitme'),
+      description: 'Blurs pores for a naturally matte, smooth finish. Oil-control formula with micro-powders. 40 inclusive shades. Dermatologist tested, non-comedogenic.',
+      specs: { Coverage: 'Medium to Full', Finish: 'Matte', Skin: 'Oily / Combination', SPF: 'None', Volume: '30ml', Dermatologist: 'Tested', Shades: '40+' },
+    },
+    {
+      name: "L'Oreal Paris Matte Addiction Lipstick (Scarlet Silhouette)", brand: "L'Oreal Paris",
+      price: 449, mrp: 749, stock: 350, isFeatured: true, images: img('loreal-matte-lip'),
+      description: 'Ultra-matte longwear lipstick with 70% hydration. Delivers intense color with a velvety matte finish that lasts up to 8 hours.',
+      specs: { Finish: 'Ultra-Matte', 'Wear Time': 'Up to 8 Hours', Hydration: '70% Moisture', Formula: 'Weightless', Fragrance: 'Subtle', Cruelty: 'Free' },
+    },
+    {
+      name: 'SUGAR Cosmetics Matte Attack Transferproof Lipstick (07)', brand: 'SUGAR',
+      price: 349, mrp: 599, stock: 280, images: img('sugar-matte-lip'),
+      description: 'Ultra-pigmented, transfer-proof matte lipstick that glides on like butter. Lasts up to 12 hours without touch-up. 20 stunning Indian-curated shades.',
+      specs: { Finish: 'Matte', 'Wear Time': 'Up to 12 Hours', 'Transfer Proof': 'Yes', 'Shades': '20+', Formula: 'Creamy Glide', Cruelty: 'Free', Vegan: 'Yes' },
+    },
+    {
+      name: 'Lakme Eyeconic Kajal Twin Pack', brand: 'Lakme',
+      price: 249, mrp: 349, stock: 500, images: img('lakme-kajal'),
+      description: "India's most loved kajal — long-lasting, intense black kohl that glides smoothly. Smudge-resistant formula with micro-precision tip for perfect definition.",
+      specs: { Type: 'Kohl / Kajal', Finish: 'Intense Black', 'Wear Time': 'Up to 16 Hours', Smudge: 'Resistant', 'Tip': 'Micro-Precision', Quantity: '2 Units' },
+    },
+    {
+      name: 'NYX Professional Makeup Butter Gloss (Éclair)', brand: 'NYX',
+      price: 399, mrp: 699, stock: 200, images: img('nyx-buttergloss'),
+      description: 'Creamy, cushiony lip gloss with a non-sticky, high-shine finish. Infused with shea butter, vanilla and cherry extracts for moisturised, plump-looking lips.',
+      specs: { Finish: 'High-Shine Gloss', Formula: 'Non-Sticky', 'Key Ingredient': 'Shea Butter', Scent: 'Vanilla + Cherry', Volume: '8ml', Vegan: 'Yes', Cruelty: 'Free' },
+    },
+    {
+      name: 'Faces Canada Ultime Pro Eyeshadow Palette (Nude)', brand: 'Faces Canada',
+      price: 699, mrp: 1199, stock: 150, images: img('facescanada-palette'),
+      description: '12 richly pigmented eyeshadow shades ranging from matte to shimmer. Blendable, buildable, and long-wearing formula for all-day eye looks.',
+      specs: { Shades: '12', Finish: 'Matte + Shimmer', 'Coverage': 'Buildable', 'Wear': 'Long-lasting', 'Cruelty': 'Free', 'Vegan': 'Yes', Quantity: '12g total' },
+    },
+  ],
+
+  'Hair Care': [
+    {
+      name: "L'Oreal Paris Fall Resist 3X Shampoo 340ml", brand: "L'Oreal Paris",
+      price: 329, mrp: 549, stock: 400, isFeatured: true, images: img('loreal-shampoo'),
+      description: '3X anti-hair fall action: strengthens hair roots, nourishes hair fibre, and protects against breakage. Dermatologist recommended formula.',
+      specs: { 'Hair Type': 'Hair Fall Prone', Volume: '340ml', 'Key Ingredient': 'Arginine + Salicylic Acid', 'Sulfate': 'Free', Usage: 'Daily Use', Dermatologist: 'Recommended' },
+    },
+    {
+      name: 'TRESemmé Keratin Smooth Shampoo + Conditioner 580ml', brand: 'TRESemmé',
+      price: 499, mrp: 799, stock: 300, images: img('tresemme-keratin'),
+      description: 'Salon-inspired keratin shampoo and conditioner that smoothens and tames frizzy hair for up to 72 hours. Infused with marula oil for shine.',
+      specs: { 'Hair Type': 'Frizzy / Dry', Volume: '580ml (combo)', 'Key Ingredient': 'Keratin + Marula Oil', 'Frizz Control': '72 Hours', 'Includes': 'Shampoo + Conditioner' },
+    },
+    {
+      name: 'Mamaearth Onion Hair Oil 250ml', brand: 'Mamaearth',
+      price: 349, mrp: 549, stock: 350, images: img('mamaearth-onionoil'),
+      description: 'Enriched with Onion Oil and Redensyl to reduce hair fall and promote regrowth. 100% toxin-free with no mineral oil, sulfates, or parabens.',
+      specs: { 'Key Ingredient': 'Onion Oil + Redensyl', Volume: '250ml', 'Hair Type': 'All Types', 'Toxin': 'Free', 'Mineral Oil': 'Free', 'Sulfate': 'Free', Cruelty: 'Free' },
+    },
+    {
+      name: 'Dove Intense Repair Conditioner 180ml', brand: 'Dove',
+      price: 199, mrp: 299, stock: 450, images: img('dove-conditioner'),
+      description: 'Keratin Actives formula penetrates deep to repair damage from within. 100x softer, stronger hair in 1 wash. Works on all hair types.',
+      specs: { 'Hair Type': 'Damaged / Dry', Volume: '180ml', 'Key Ingredient': 'Keratin Actives + Fibercure', Usage: 'Post Shampoo', 'Silicone': 'Free', 'Dermatologist': 'Tested' },
+    },
+  ],
+
+  // ── Toys ──────────────────────────────────────────────────────────────────────
+
+  'Educational Toys': [
+    {
+      name: 'LEGO Classic Large Creative Brick Box (790 Pieces)', brand: 'LEGO',
+      price: 3499, mrp: 5999, stock: 80, isFeatured: true, images: img('lego-classic'),
+      description: '790 LEGO bricks in 33 colours with inspiration booklet. Build cars, trains, houses, animals and more. Develops creativity and motor skills for ages 4+.',
+      specs: { Pieces: '790', 'Age Group': '4+ Years', Colors: '33 Classic Colors', Includes: 'Inspiration Booklet', Material: 'ABS Plastic', 'Safety': 'CE Certified', Brand: 'LEGO' },
+    },
+    {
+      name: 'Fisher-Price Laugh & Learn Smart Learning Home', brand: 'Fisher-Price',
+      price: 2799, mrp: 4499, stock: 60, images: img('fisherprice-learninghome'),
+      description: 'Interactive learning toy with 10+ activities teaching letters, numbers, shapes, and music. Grows with your child from 6 months to 3 years.',
+      specs: { 'Age Group': '6 Months - 3 Years', Activities: '10+', 'Learning Areas': 'Letters + Numbers + Shapes + Music', 'Batteries': '3 AA (included)', Material: 'BPA-Free Plastic', Safety: 'EN71 Certified' },
+    },
+    {
+      name: "Rubik's Cube 3x3 Original (Speed Cube)", brand: "Rubik's",
+      price: 449, mrp: 799, stock: 300, isFeatured: true, images: img('rubiks-cube'),
+      description: "The world's best-selling puzzle toy. Original 3x3 Rubik's Cube with 43 quintillion possible combinations. Develops spatial reasoning and problem-solving.",
+      specs: { Dimension: '5.7 x 5.7 x 5.7 cm', 'Age Group': '8+ Years', Material: 'ABS Plastic', 'Solving Time': 'Average 3–5 min for beginners', Safety: 'Non-Toxic', Weight: '110g' },
+    },
+    {
+      name: 'Funskool Monopoly (Indian Version)', brand: 'Funskool',
+      price: 699, mrp: 1099, stock: 120, images: img('funskool-monopoly'),
+      description: 'Classic Monopoly board game with Indian cities and properties. Develops financial literacy, strategy, and negotiation skills. For 2–6 players, ages 8+.',
+      specs: { Players: '2–6', 'Age Group': '8+ Years', Duration: '60–180 mins', Language: 'English', Components: 'Board, Cards, Tokens, Dice, Houses, Hotels', 'Skill': 'Strategy + Negotiation' },
+    },
+    {
+      name: 'Meccano Evolution 25 Metal Building Set', brand: 'Meccano',
+      price: 1799, mrp: 2999, stock: 70, images: img('meccano-set'),
+      description: '25 real metal parts with screws, nuts, and tools for 5 different vehicle builds. Develops STEM skills and fine motor coordination for ages 8+.',
+      specs: { Pieces: '25+', 'Age Group': '8+ Years', Material: 'Real Metal', Builds: '5 Vehicle Models', Includes: 'Wrench + Screwdriver', 'Skill Development': 'STEM + Motor Skills' },
+    },
+    {
+      name: 'Skillmatics Card Game: Guess in 10 Animal Kingdom', brand: 'Skillmatics',
+      price: 399, mrp: 649, stock: 200, images: img('skillmatics-guessin10'),
+      description: 'Award-winning card game for 2–6 players. Ask smart questions and guess the animal in 10 clues or fewer. Builds critical thinking for ages 6-99.',
+      specs: { Players: '2–6', 'Age Group': '6+ Years', Cards: '60 Animal Cards', Duration: '20–30 mins', 'Award': 'National Parenting Product Award', Skill: 'Critical Thinking' },
+    },
+  ],
+
+  'Action Figures': [
+    {
+      name: 'Hot Wheels 20 Car Gift Pack', brand: 'Hot Wheels',
+      price: 999, mrp: 1599, stock: 200, isFeatured: true, images: img('hotwheels-20pack'),
+      description: '20 die-cast Hot Wheels cars in 1:64 scale — assorted styles and colors. Collectible mini cars for kids and adult collectors. Ages 3+.',
+      specs: { Pieces: '20 Cars', Scale: '1:64', Material: 'Die-Cast Metal', 'Age Group': '3+ Years', Length: '~7cm each', Collectible: 'Yes', 'Safety': 'EN71 Certified' },
+    },
+    {
+      name: 'Marvel Avengers Iron Man 6" Action Figure', brand: 'Hasbro',
+      price: 799, mrp: 1299, stock: 150, images: img('marvel-ironman'),
+      description: 'Highly detailed Iron Man action figure with 4 points of articulation. Collector-quality paint and sculpt inspired by Marvel movies. For ages 4+.',
+      specs: { Height: '6 inches (15cm)', Character: 'Iron Man', 'Points of Articulation': '4', Material: 'ABS Plastic', 'Age Group': '4+ Years', Licence: 'Official Marvel', Collector: 'Grade' },
+    },
+    {
+      name: 'Chhota Bheem Dholakpur Heroes Combo Pack', brand: 'Funskool',
+      price: 599, mrp: 999, stock: 120, images: img('chhota-bheem-set'),
+      description: 'Official Chhota Bheem figurines — Bheem, Chutki, Raju, and Kalia. Highly detailed, durable plastic figures inspired by the hit Indian cartoon. Ages 3+.',
+      specs: { Characters: '4 (Bheem + Chutki + Raju + Kalia)', Height: '~8cm each', Material: 'Non-Toxic ABS', 'Age Group': '3+ Years', Licence: 'Official Green Gold', 'Safety': 'IS 9873 Certified' },
+    },
+    {
+      name: 'Barbie Fashionistas Doll — Curvy, Black Hair', brand: 'Barbie',
+      price: 699, mrp: 1099, stock: 180, images: img('barbie-fashionista'),
+      description: 'Curvy Barbie doll with black hair and trendy outfit. Includes doll, fashion outfit, shoes, and accessories. Celebrates diversity in fashion. Ages 3+.',
+      specs: { Height: '11.5 inches (29cm)', Body: 'Curvy', Includes: 'Doll + Outfit + Shoes', Material: 'Soft Vinyl + ABS', 'Age Group': '3+ Years', 'Articulation': '10 Points' },
+    },
+    {
+      name: 'Minecraft Creeper Action Figure 7" Foam', brand: 'Minecraft',
+      price: 499, mrp: 899, stock: 140, images: img('minecraft-creeper'),
+      description: 'Officially licensed 7" foam Creeper figure from Minecraft. Soft, safe material ideal for young fans. Screen-accurate design with detailed pixelated texture.',
+      specs: { Height: '7 inches (18cm)', Material: 'EVA Foam (Soft)', Character: 'Creeper', Game: 'Minecraft', 'Age Group': '4+ Years', Licence: 'Official Mojang', Weight: '180g' },
+    },
+  ],
+
+  // ── Two Wheelers ──────────────────────────────────────────────────────────────
+
+  Bikes: [
+    {
+      name: 'Hero Splendor Plus IBS BS6 (Black Viper Red)', brand: 'Hero',
+      price: 74900, mrp: 79900, stock: 15, isFeatured: true, images: img('hero-splendor'),
+      description: "India's best-selling motorcycle with i3S technology for fuel efficiency. Integrated Braking System, Side Stand Indicator, and USB charging port. 80+ kmpl.",
+      specs: { Engine: '97.2cc Single-Cylinder Air-Cooled', Power: '7.91 bhp @ 8000rpm', Torque: '8.05 Nm @ 6000rpm', 'Fuel Efficiency': '80+ kmpl', Brakes: 'IBS (Drum)', Fuel: 'Petrol', Gears: '4-Speed' },
+    },
+    {
+      name: 'Bajaj Pulsar NS200 BS6 (Pewter Grey)', brand: 'Bajaj',
+      price: 148500, mrp: 158500, stock: 8, isFeatured: true, images: img('bajaj-pulsarns200'),
+      description: 'Triple spark plug DTS-i technology 200cc engine for maximum combustion efficiency. Perimeter frame, adjustable monoshock, and petal disc brakes front and rear.',
+      specs: { Engine: '199.5cc DOHC Liquid-Cooled', Power: '24.5 bhp @ 9750rpm', Torque: '18.74 Nm @ 8000rpm', 'Fuel Efficiency': '35–40 kmpl', Brakes: 'Dual Disc', Fuel: 'Petrol', Gears: '6-Speed' },
+    },
+    {
+      name: 'Royal Enfield Meteor 350 Fireball (Red)', brand: 'Royal Enfield',
+      price: 210000, mrp: 225000, stock: 6, isFeatured: true, images: img('re-meteor350'),
+      description: "India's best-selling cruiser motorcycle. Modern 349cc J-series engine with Tripper Navigation, Roto Grip Switches, and class-leading comfort for long rides.",
+      specs: { Engine: '349cc J-series Air-Cooled', Power: '20.2 bhp @ 6100rpm', Torque: '27 Nm @ 4000rpm', 'Fuel Efficiency': '36.2 kmpl', Brakes: 'Dual Disc + ABS', Fuel: 'Petrol', 'Navigation': 'Tripper Pod' },
+    },
+    {
+      name: 'Honda CB Shine SP Drum CBS BS6 (Black)', brand: 'Honda',
+      price: 82000, mrp: 87000, stock: 12, images: img('honda-cbshine'),
+      description: 'Enhanced Superior Performance with HET (Honda Eco Technology) for excellent fuel efficiency. CBS (Combined Braking System) for safer deceleration.',
+      specs: { Engine: '124cc Single-Cylinder Air-Cooled', Power: '10.16 bhp @ 7500rpm', Torque: '10.9 Nm @ 5500rpm', 'Fuel Efficiency': '60+ kmpl', Brakes: 'Drum + CBS', Fuel: 'Petrol', Gears: '5-Speed' },
+    },
+    {
+      name: 'TVS Apache RTR 160 4V (Racing Edition Blue)', brand: 'TVS',
+      price: 118000, mrp: 128000, stock: 10, images: img('tvs-apache160'),
+      description: 'Race DNA in an everyday package. Oil-cooled 4-valve engine with SmartXonnect Bluetooth, Race Tuned Fuel Injection, and Glide Through Technology.',
+      specs: { Engine: '159.7cc Oil-Cooled 4-Valve', Power: '17.55 bhp @ 9250rpm', Torque: '14.73 Nm @ 7250rpm', 'Fuel Efficiency': '45.7 kmpl', Brakes: 'Dual Disc + ABS', Connectivity: 'SmartXonnect Bluetooth', Gears: '5-Speed' },
+    },
+    {
+      name: 'Yamaha FZ-S FI V3.0 Matte (Matte Black)', brand: 'Yamaha',
+      price: 125000, mrp: 133000, stock: 9, images: img('yamaha-fzs'),
+      description: 'Y-Connect app connectivity, LED headlamp, and Bluetooth enabled instrument cluster. Fuel-injected 149cc engine with Assist and Slipper Clutch for sporty riding.',
+      specs: { Engine: '149cc Blue Core Air-Cooled', Power: '12.4 bhp @ 7250rpm', Torque: '13.3 Nm @ 5500rpm', 'Fuel Efficiency': '51.2 kmpl', Brakes: 'Disc + SBC', Connectivity: 'Y-Connect Bluetooth', Clutch: 'Assist & Slipper' },
+    },
+  ],
+
+  Scooters: [
+    {
+      name: 'Honda Activa 125 H-Smart OBD2 (Rebel Red Metallic)', brand: 'Honda',
+      price: 98000, mrp: 103000, stock: 20, isFeatured: true, images: img('honda-activa125'),
+      description: "Segment-first Smartphone Voice Control and Alexa Connectivity. 125cc fuel-injected engine for 60+ kmpl efficiency. OBD2 compliant with LED indicators.",
+      specs: { Engine: '124cc Single-Cylinder eSP+', Power: '8.29 bhp @ 6500rpm', Torque: '10.9 Nm @ 5000rpm', 'Fuel Efficiency': '60+ kmpl', Brakes: 'Drum + CBS', Connectivity: 'Alexa + Voice Control', Storage: '26 Litres' },
+    },
+    {
+      name: 'TVS Jupiter Classic Edition (Matte Cyan Blue)', brand: 'TVS',
+      price: 88000, mrp: 93000, stock: 16, images: img('tvs-jupiter'),
+      description: 'Largest under-seat storage in segment at 22 litres. ETFi engine with Econometer for fuel tracking. Mobile charging socket, external fuel fill, and ride modes.',
+      specs: { Engine: '109.7cc Single-Cylinder', Power: '7.7 bhp @ 7500rpm', Torque: '8.8 Nm @ 5500rpm', 'Fuel Efficiency': '51 kmpl', Brakes: 'Drum + CBS', 'Under-Seat Storage': '22 Litres', Charging: 'USB Port' },
+    },
+    {
+      name: 'Suzuki Access 125 Special Edition (Sunset Glow Red)', brand: 'Suzuki',
+      price: 92000, mrp: 98000, stock: 14, images: img('suzuki-access125'),
+      description: 'Smooth 125cc fuel-injected engine with Superior Idling System. Large 21.5L underseat storage, digital instrument cluster, and external fuel lid with key shutter.',
+      specs: { Engine: '124cc SOHC Fuel-Injected', Power: '8.7 bhp @ 6750rpm', Torque: '10 Nm @ 5500rpm', 'Fuel Efficiency': '58.5 kmpl', Brakes: 'Drum + CBS', 'Under-Seat Storage': '21.5 Litres', Instrument: 'Full Digital' },
+    },
+    {
+      name: 'Yamaha Fascino 125 Fi Hybrid (Cyan)', brand: 'Yamaha',
+      price: 95000, mrp: 101000, stock: 12, images: img('yamaha-fascino'),
+      description: "India's first 125cc hybrid scooter with Smart Motor Generator for quick restarts. Y-Connect Bluetooth app with call + SMS alerts. 3.4Ah smart battery.",
+      specs: { Engine: '125cc Blue Core + SMG Hybrid', Power: '8.2 bhp @ 6500rpm', Torque: '10.3 Nm @ 5000rpm', 'Fuel Efficiency': '66.4 kmpl', Brakes: 'Drum + UBS', Connectivity: 'Y-Connect Bluetooth', Technology: 'Hybrid SMG' },
+    },
+  ],
 };
 
 // ─── Review comment pool ──────────────────────────────────────────────────────
@@ -469,7 +973,7 @@ const ADDRESSES = [
 ];
 
 const ORDER_STATUSES = ['placed', 'processing', 'shipped', 'delivered', 'delivered'];
-const PAYMENT_METHODS = ['UPI', 'Credit Card', 'Debit Card', 'Net Banking', 'Cash on Delivery'];
+const PAYMENT_METHODS = ['cod', 'online', 'online', 'online', 'cod']; // matches Order schema enum
 
 // ─── Seed ─────────────────────────────────────────────────────────────────────
 async function seed() {
@@ -599,26 +1103,36 @@ async function seed() {
     // ── Orders ──
     const orderRows = [];
     for (let i = 0; i < customers.length; i++) {
-      const customer  = customers[i];
+      const customer   = customers[i];
       const orderCount = ri(1, 2);
+      const addr       = ADDRESSES[i % ADDRESSES.length];
+
       for (let o = 0; o < orderCount; o++) {
-        const itemCount  = ri(1, 3);
+        const itemCount = ri(1, 3);
         const items = pick(productDocs, itemCount).map((p) => ({
-          product: p._id,
-          quantity: ri(1, 2),
-          price: p.price,
+          product:   p._id,
+          productId: p._id.toString(),
+          name:      p.name,
+          price:     p.price,
+          mrp:       p.mrp,
+          image:     p.images?.[0] ?? '',
+          quantity:  ri(1, 2),
         }));
         const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
 
         orderRows.push({
-          user: customer._id,
+          user:   customer._id,
           items,
-          address: ADDRESSES[i % ADDRESSES.length],
-          payment: {
-            method: PAYMENT_METHODS[ri(0, PAYMENT_METHODS.length - 1)],
-            status: 'completed',
-            transactionId: `TXN${Date.now()}${ri(1000, 9999)}`,
+          shippingAddress: {
+            fullName: customer.name,
+            phone:    customer.phone ?? `98${String(i).padStart(9, '0')}`,
+            street:   addr.street,
+            city:     addr.city,
+            state:    addr.state,
+            pincode:  addr.pincode,
           },
+          paymentMethod: PAYMENT_METHODS[ri(0, PAYMENT_METHODS.length - 1)],
+          paymentStatus: 'paid',
           status: ORDER_STATUSES[ri(0, ORDER_STATUSES.length - 1)],
           total,
         });

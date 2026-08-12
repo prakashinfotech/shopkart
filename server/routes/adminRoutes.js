@@ -9,6 +9,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleListing,
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -29,8 +30,9 @@ router.get('/stats',           getDashboardStats);
 router.get('/categories',      getCategories);
 router.get('/products',        getAllProducts);
 router.get('/products/:id',    getProductById);
-router.post('/products',       withUpload(createProduct));
-router.put('/products/:id',    withUpload(updateProduct));
-router.delete('/products/:id', deleteProduct);
+router.post('/products',              withUpload(createProduct));
+router.put('/products/:id',           withUpload(updateProduct));
+router.patch('/products/:id/listing', toggleListing);
+router.delete('/products/:id',        deleteProduct);
 
 export default router;
