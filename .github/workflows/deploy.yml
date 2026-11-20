@@ -1,0 +1,288 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The production server's major version (Node 24, npm 11).
+  NODE_VERSION: "24"
+  DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/var/www/shopkart' }}
+  PM2_APPS: ${{ vars.PM2_APPS || 'shopkart shopkart-api' }}
+
+jobs:
+
+  # ==========================================
+  # CI: build every part
+  # Runs on GitHub-hosted runners
+  # ==========================================
+
+  build:
+    name: Build ${{ matrix.part }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - part: client
+            dir: "client"
+            install: "npm ci"
+            check: "npm run build"
+          - part: server
+            dir: "server"
+            install: "npm ci"
+            check: "node --check server.js"
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: ${{ matrix.install }}
+
+      - name: Check
+        run: ${{ matrix.check }}
+
+
+  # ==========================================
+  # DEPLOY: Production server
+  # Runs on the self-hosted runner on the production server
+  # ==========================================
+
+  deploy:
+    name: Deploy to production
+
+    needs:
+      - build
+
+    # Never deploy PR validation runs.
+    # Deploy only master branch pushes or manual runs
+    # started against master.
+
+    if: >
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/master'
+
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - brd
+      - local-server
+
+    environment: production
+
+    concurrency:
+      group: deploy-shopkart
+      cancel-in-progress: false
+
+    steps:
+
+      # ------------------------------------------
+      # 1. Verify server configuration
+      # ------------------------------------------
+
+      - name: Check server prerequisites
+        run: |
+          set -euo pipefail
+
+          echo "Deployment directory: $DEPLOY_DIR"
+          echo "Runner user: $(whoami)"
+
+          node -v
+          npm -v
+          git --version
+          pm2 -v
+
+          if [ ! -d "$DEPLOY_DIR/.git" ]; then
+            echo "::error::Deployment directory is not a Git repository"
+            exit 1
+          fi
+
+          for f in client/.env server/.env; do
+            if [ ! -e "$DEPLOY_DIR/$f" ]; then
+              echo "::error::Missing $DEPLOY_DIR/$f"
+              exit 1
+            fi
+          done
+
+          for app in $PM2_APPS; do
+            pm2 describe "$app" > /dev/null || {
+              echo "::error::PM2 application $app not found"
+              exit 1
+            }
+          done
+
+          echo "Server prerequisites verified."
+
+
+      # ------------------------------------------
+      # 2. Update deployment directory
+      # ------------------------------------------
+
+      - name: Pull latest master code
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: |
+          set -euo pipefail
+
+          git config --global --add safe.directory "$DEPLOY_DIR"
+
+          echo "Fetching latest master..."
+
+          # Retried: a short network outage between this server and GitHub
+          # once failed a deploy here (git exit code 128).
+          for attempt in 1 2 3 4 5; do
+            if git fetch origin master; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error::git fetch failed 5 times"
+              exit 1
+            fi
+            echo "git fetch failed (attempt $attempt of 5); retrying in $((attempt * 10)) s..."
+            sleep $((attempt * 10))
+          done
+
+          # Force deployment clone onto remote master.
+          # This discards local tracked changes. Untracked and
+          # ignored files (.env files, uploads) are kept.
+
+          git checkout -f -B master origin/master
+
+          git reset --hard origin/master
+
+          echo "-----------------------------------"
+          echo "Deployment branch: $(git branch --show-current)"
+          echo "Deployed commit: $(git rev-parse HEAD)"
+          echo "Triggered commit: $GITHUB_SHA"
+          echo "-----------------------------------"
+
+          git status --short
+
+
+      # ------------------------------------------
+      # 3. Install API
+      # ------------------------------------------
+
+      - name: Install API
+        working-directory: ${{ env.DEPLOY_DIR }}/server
+        run: |
+          set -euo pipefail
+
+          npm ci
+
+          echo "Install API: done."
+
+
+      # ------------------------------------------
+      # 4. Build web app
+      # ------------------------------------------
+
+      - name: Build web app
+        working-directory: ${{ env.DEPLOY_DIR }}/client
+        run: |
+          set -euo pipefail
+
+          npm ci
+
+          npm run build
+
+          if [ ! -e .next/BUILD_ID ]; then
+            echo "::error::.next/BUILD_ID was not generated"
+            exit 1
+          fi
+          echo "Build web app: done."
+
+
+      # ------------------------------------------
+      # 5. Restart PM2 applications
+      # ------------------------------------------
+
+      - name: Restart ShopKart services
+        run: |
+          set -euo pipefail
+
+          # A plain restart keeps the environment PM2 already has for each
+          # app. --update-env would copy this job's environment (GITHUB_*,
+          # RUNNER_*, ACTIONS_* tokens) into the apps and PM2's saved dump.
+          for app in $PM2_APPS; do
+            echo "Restarting $app..."
+            pm2 restart "$app"
+          done
+
+          pm2 save
+
+          pm2 list
+
+
+      # ------------------------------------------
+      # 6. Verify health
+      # ------------------------------------------
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+
+          # url|mode: "ok" needs a status below 400; "up" accepts anything
+          # below 500 (the app answers, it just has no health route there).
+          for check in "http://127.0.0.1:5000/api/health|up" "http://127.0.0.1:3005/|ok"; do
+            url=${check%|*}
+            mode=${check#*|}
+            echo "Checking $url ($mode)..."
+
+            for i in $(seq 1 20); do
+              code=$(curl -s -m 20 -o /dev/null -w "%{http_code}" "$url" || true)
+              limit=400
+              [ "$mode" = up ] && limit=500
+              if [ "$code" -ge 200 ] && [ "$code" -lt "$limit" ]; then
+                echo "$url answered $code."
+                break
+              fi
+
+              if [ "$i" -eq 20 ]; then
+                echo "::error::$url did not become healthy (last status $code)"
+                for app in $PM2_APPS; do
+                  pm2 logs "$app" --nostream --lines 50
+                done
+                exit 1
+              fi
+
+              sleep 3
+            done
+          done
+
+
+      # ------------------------------------------
+      # 7. Deployment summary
+      # ------------------------------------------
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "=================================="
+          echo "SHOPKART DEPLOYMENT SUCCESSFUL"
+          echo "=================================="
+          echo "Commit: $(git -C "$DEPLOY_DIR" rev-parse HEAD)"
+          echo "Branch: master"
+          echo "Runner: $(hostname)"
+          echo "User: $(whoami)"
+          echo "=================================="
